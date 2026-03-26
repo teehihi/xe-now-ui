@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, MapPin, Calendar, Car, Shield, Clock, Star, ArrowRight } from 'lucide-react';
+import { Search, MapPin, Calendar, Car, Shield, Clock, Star, ArrowRight, Zap, TrendingUp, Users } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { useInView } from 'react-intersection-observer';
 import { vehicles } from '../../data/mockData';
+import FloatingOrbs from '../../components/FloatingOrbs';
+import AnimatedCounter from '../../components/AnimatedCounter';
 
 const features = [
   { icon: Shield, title: 'Bảo hiểm toàn diện', desc: 'Xe được bảo hiểm đầy đủ, yên tâm trên mọi hành trình', color: 'bg-blue-50 border-blue-100', iconBg: 'bg-blue-100', iconColor: 'text-blue-600' },
@@ -21,23 +25,64 @@ export default function Home() {
     (searchLocation === '' || v.location.toLowerCase().includes(searchLocation.toLowerCase()))
   );
 
+  const [statsRef, statsInView] = useInView({ triggerOnce: true, threshold: 0.3 });
+  const [featuresRef, featuresInView] = useInView({ triggerOnce: true, threshold: 0.2 });
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: { duration: 0.5 }
+    }
+  };
+
   return (
     <>
       {/* Hero */}
       <section className="relative h-[600px] overflow-hidden">
+        <FloatingOrbs />
         <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: 'url(/images/hero-bg.webp)' }} />
         <div className="absolute inset-0 bg-gradient-to-r from-[#0F172B]/90 to-[#1C398E]/80" />
+        
         <div className="relative z-10 max-w-6xl mx-auto px-8 h-full flex flex-col items-center justify-center text-center">
-          <h1 className="text-7xl font-medium text-white leading-tight mb-4">
-            Thuê Xe Chất Lượng<br />
-            <span className="bg-gradient-to-r from-[#51A2FF] to-[#155DFC] bg-clip-text text-transparent">Trải Nghiệm Đỉnh Cao</span>
-          </h1>
-          <p className="text-2xl text-[#E2E8F0] mb-12 max-w-3xl">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <h1 className="text-7xl font-medium text-white leading-tight mb-4">
+              Thuê Xe Chất Lượng<br />
+              <span className="bg-gradient-to-r from-[#51A2FF] via-[#3B82F6] to-[#155DFC] bg-clip-text text-transparent animate-gradient">
+                Trải Nghiệm Đỉnh Cao
+              </span>
+            </h1>
+          </motion.div>
+          
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="text-2xl text-[#E2E8F0] mb-12 max-w-3xl"
+          >
             Đặt xe dễ dàng, lái xe an toàn cùng XeNow - Nền tảng cho thuê xe hàng đầu Việt Nam
-          </p>
+          </motion.p>
 
           {/* Search bar */}
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-4xl border border-gray-200">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl p-6 w-full max-w-4xl border border-white/20"
+          >
             <div className="grid grid-cols-5 gap-0">
               <div className="px-3">
                 <label className="flex items-center gap-2 text-xs font-medium text-[#45556C] mb-2">
@@ -83,27 +128,90 @@ export default function Home() {
                 </button>
               </div>
             </div>
-          </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="relative py-16 bg-gradient-to-b from-white to-[#F8FAFC] overflow-hidden">
+        <FloatingOrbs />
+        <div className="relative z-10 max-w-6xl mx-auto px-8">
+          <motion.div
+            ref={statsRef}
+            variants={containerVariants}
+            initial="hidden"
+            animate={statsInView ? "visible" : "hidden"}
+            className="grid grid-cols-4 gap-8"
+          >
+            {[
+              { icon: Car, value: 500, suffix: '+', label: 'Xe chất lượng cao', color: 'from-blue-500 to-blue-600' },
+              { icon: Users, value: 10000, suffix: '+', label: 'Khách hàng hài lòng', color: 'from-purple-500 to-purple-600' },
+              { icon: TrendingUp, value: 98, suffix: '%', label: 'Tỷ lệ hài lòng', color: 'from-green-500 to-green-600' },
+              { icon: Zap, value: 24, suffix: '/7', label: 'Hỗ trợ nhanh chóng', color: 'from-orange-500 to-orange-600' },
+            ].map((stat, i) => (
+              <motion.div
+                key={i}
+                variants={itemVariants}
+                className="relative group"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-300" />
+                <div className="relative bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-100 hover:border-blue-200 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center mb-4`}>
+                    <stat.icon size={24} className="text-white" />
+                  </div>
+                  <div className="text-3xl font-bold text-gray-900 mb-1">
+                    <AnimatedCounter end={stat.value} suffix={stat.suffix} />
+                  </div>
+                  <div className="text-sm text-gray-600">{stat.label}</div>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
         </div>
       </section>
 
       {/* Why XeNow */}
-      <section className="max-w-6xl mx-auto px-8 py-16">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold text-gray-900">Tại sao chọn XeNow?</h2>
-          <p className="text-gray-500 mt-2">Dịch vụ chuyên nghiệp, uy tín và đáng tin cậy</p>
-        </div>
-        <div className="grid grid-cols-4 gap-6">
-          {features.map(f => (
-            <div key={f.title} className={`rounded-2xl border p-6 ${f.color}`}>
-              <div className={`w-12 h-12 rounded-2xl ${f.iconBg} flex items-center justify-center mb-4`}>
-                <f.icon size={22} className={f.iconColor} />
+      <section className="relative max-w-6xl mx-auto px-8 py-16 overflow-hidden">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-10"
+        >
+          <h2 className="text-4xl font-bold text-gray-900 mb-3">Tại sao chọn XeNow?</h2>
+          <p className="text-gray-500 text-lg">Dịch vụ chuyên nghiệp, uy tín và đáng tin cậy</p>
+        </motion.div>
+        
+        <motion.div
+          ref={featuresRef}
+          variants={containerVariants}
+          initial="hidden"
+          animate={featuresInView ? "visible" : "hidden"}
+          className="grid grid-cols-4 gap-6"
+        >
+          {features.map((f, index) => (
+            <motion.div
+              key={f.title}
+              variants={itemVariants}
+              whileHover={{ y: -8, scale: 1.02 }}
+              className={`relative rounded-2xl border p-6 ${f.color} group cursor-pointer overflow-hidden`}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="relative">
+                <motion.div
+                  whileHover={{ rotate: 360, scale: 1.1 }}
+                  transition={{ duration: 0.6 }}
+                  className={`w-12 h-12 rounded-2xl ${f.iconBg} flex items-center justify-center mb-4 shadow-lg`}
+                >
+                  <f.icon size={22} className={f.iconColor} />
+                </motion.div>
+                <h3 className="font-semibold text-gray-900 mb-2">{f.title}</h3>
+                <p className="text-sm text-gray-600">{f.desc}</p>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">{f.title}</h3>
-              <p className="text-sm text-gray-600">{f.desc}</p>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </section>
 
       {/* Available vehicles */}
@@ -118,12 +226,23 @@ export default function Home() {
               Xem tất cả <ArrowRight size={16} />
             </button>
           </div>
-          <div className="grid grid-cols-3 gap-6">
-            {filtered.slice(0, 6).map(v => (
-              <div key={v.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => navigate(`/vehicles/${v.id}`)}>
-                <div className="relative h-48 bg-gray-100">
-                  <img src={v.image} alt={v.name} className="w-full h-full object-cover" />
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="grid grid-cols-3 gap-6"
+          >
+            {filtered.slice(0, 6).map((v, index) => (
+              <motion.div
+                key={v.id}
+                variants={itemVariants}
+                whileHover={{ y: -8, scale: 1.02 }}
+                className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-300 cursor-pointer group"
+                onClick={() => navigate(`/vehicles/${v.id}`)}
+              >
+                <div className="relative h-48 bg-gray-100 overflow-hidden">
+                  <img src={v.image} alt={v.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                   <div className="absolute top-3 right-3">
                     <span className="px-2.5 py-1 bg-green-100 text-green-700 border border-green-200 rounded-lg text-xs font-medium">Sẵn sàng</span>
                   </div>
@@ -148,21 +267,36 @@ export default function Home() {
                     <button className="text-sm text-[#1B83A1] font-medium hover:underline">Xem chi tiết →</button>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* CTA */}
-      <section className="bg-gradient-to-r from-[#155DFC] to-[#1447E6] py-16">
-        <div className="max-w-6xl mx-auto px-8 text-center">
-          <h2 className="text-3xl font-bold text-white mb-3">Sẵn sàng bắt đầu hành trình?</h2>
-          <p className="text-blue-200 text-lg mb-6">Đăng ký ngay để nhận ưu đãi đặc biệt cho lần thuê xe đầu tiên</p>
-          <button className="px-8 py-3 bg-white text-[#1B83A1] font-semibold rounded-xl hover:bg-blue-50 transition-colors">
+      <section className="relative bg-gradient-to-r from-[#155DFC] to-[#1447E6] py-20 overflow-hidden">
+        <FloatingOrbs />
+        <div className="absolute inset-0 bg-[url('/images/hero-bg.webp')] bg-cover bg-center opacity-10" />
+        
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="relative z-10 max-w-6xl mx-auto px-8 text-center"
+        >
+          <h2 className="text-4xl font-bold text-white mb-4">Sẵn sàng bắt đầu hành trình?</h2>
+          <p className="text-blue-100 text-xl mb-8">Đăng ký ngay để nhận ưu đãi đặc biệt cho lần thuê xe đầu tiên</p>
+          
+          <motion.button
+            whileHover={{ scale: 1.05, boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => navigate('/register')}
+            className="px-10 py-4 bg-white text-[#155DFC] font-semibold rounded-xl hover:bg-blue-50 transition-colors shadow-2xl"
+          >
             Đăng ký ngay
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
       </section>
     </>
   );
