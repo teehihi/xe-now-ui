@@ -1,12 +1,37 @@
+import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { Home, CalendarCheck, User, Settings } from 'lucide-react';
+import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
 
 export default function UserLayout() {
   const navigate = useNavigate();
+  const [hidden, setHidden] = useState(false);
+  const [forceHide, setForceHide] = useState(false);
+  const { scrollY } = useScroll();
+
+  useEffect(() => {
+    const handleToggle = (e) => setForceHide(e.detail.hide);
+    window.addEventListener('toggle-header', handleToggle);
+    return () => window.removeEventListener('toggle-header', handleToggle);
+  }, []);
+
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    const previous = scrollY.getPrevious();
+    if (latest > previous && latest > 150) {
+      setHidden(true);
+    } else if (latest < previous) {
+      setHidden(false);
+    }
+  });
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8FAFC] via-[#EFF6FF] to-[#F8FAFC]">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-gray-200 shadow-sm">
+      <motion.header 
+        variants={{ visible: { y: 0 }, hidden: { y: "-100%" } }}
+        animate={(hidden || forceHide) ? "hidden" : "visible"}
+        transition={{ duration: 0.35, ease: "easeInOut" }}
+        className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-gray-200 shadow-sm"
+      >
         <div className="max-w-6xl mx-auto px-8 h-20 flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
             <img src="/images/logo.webp" alt="XeNow" className="h-16" onError={(e) => {
@@ -36,7 +61,7 @@ export default function UserLayout() {
             </button>
           </nav>
         </div>
-      </header>
+      </motion.header>
 
       <Outlet />
 

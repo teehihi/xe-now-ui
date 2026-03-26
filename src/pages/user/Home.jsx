@@ -1,11 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, Calendar, Car, Shield, Clock, Star, ArrowRight, Zap, TrendingUp, Users } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
+import Tilt from 'react-parallax-tilt';
 import { vehicles } from '../../data/mockData';
 import FloatingOrbs from '../../components/FloatingOrbs';
 import AnimatedCounter from '../../components/AnimatedCounter';
+import MouseTracker from '../../components/MouseTracker';
+import ParticleField from '../../components/ParticleField';
+import SpeedLines from '../../components/SpeedLines';
+import CarAnimation from '../../components/CarAnimation';
+import ScrollProgress from '../../components/ScrollProgress';
+import ParallaxSection from '../../components/ParallaxSection';
+import RentalProcess from '../../components/RentalProcess';
+import Testimonials from '../../components/Testimonials';
 
 const features = [
   { icon: Shield, title: 'Bảo hiểm toàn diện', desc: 'Xe được bảo hiểm đầy đủ, yên tâm trên mọi hành trình', color: 'bg-blue-50 border-blue-100', iconBg: 'bg-blue-100', iconColor: 'text-blue-600' },
@@ -18,6 +27,22 @@ export default function Home() {
   const navigate = useNavigate();
   const [searchLocation, setSearchLocation] = useState('');
   const [searchType, setSearchType] = useState('Tất cả');
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+
+  const { scrollY } = useScroll();
+  const heroOpacity = useTransform(scrollY, [0, 300], [1, 0]);
+  const heroScale = useTransform(scrollY, [0, 300], [1, 0.8]);
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      setMousePosition({
+        x: (e.clientX / window.innerWidth - 0.5) * 20,
+        y: (e.clientY / window.innerHeight - 0.5) * 20,
+      });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   const availableVehicles = vehicles.filter(v => v.status === 'available');
   const filtered = availableVehicles.filter(v =>
@@ -47,19 +72,31 @@ export default function Home() {
 
   return (
     <>
+      <ScrollProgress />
+      
       {/* Hero */}
       <section className="relative h-[600px] overflow-hidden">
         <FloatingOrbs />
+        <ParticleField />
+        <SpeedLines />
+        <CarAnimation />
+        
         <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: 'url(/images/hero-bg.webp)' }} />
         <div className="absolute inset-0 bg-gradient-to-r from-[#0F172B]/90 to-[#1C398E]/80" />
         
-        <div className="relative z-10 max-w-6xl mx-auto px-8 h-full flex flex-col items-center justify-center text-center">
+        <motion.div
+          style={{ opacity: heroOpacity, scale: heroScale }}
+          className="relative z-10 max-w-6xl mx-auto px-8 h-full flex flex-col items-center justify-center text-center"
+        >
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
+            style={{
+              transform: `translate(${mousePosition.x}px, ${mousePosition.y}px)`,
+            }}
           >
-            <h1 className="text-7xl font-medium text-white leading-tight mb-4">
+            <h1 className="text-7xl font-bold text-white leading-tight mb-4">
               Thuê Xe Chất Lượng<br />
               <span className="bg-gradient-to-r from-[#51A2FF] via-[#3B82F6] to-[#155DFC] bg-clip-text text-transparent animate-gradient">
                 Trải Nghiệm Đỉnh Cao
@@ -129,90 +166,96 @@ export default function Home() {
               </div>
             </div>
           </motion.div>
-        </div>
+        </motion.div>
       </section>
 
       {/* Stats Section */}
-      <section className="relative py-16 bg-gradient-to-b from-white to-[#F8FAFC] overflow-hidden">
-        <FloatingOrbs />
-        <div className="relative z-10 max-w-6xl mx-auto px-8">
+      <ParallaxSection speed={0.1}>
+        <section className="relative py-16 bg-gradient-to-b from-white to-[#F8FAFC] overflow-hidden">
+          <FloatingOrbs />
+          <div className="relative z-10 max-w-6xl mx-auto px-8">
+            <motion.div
+              ref={statsRef}
+              variants={containerVariants}
+              initial="hidden"
+              animate={statsInView ? "visible" : "hidden"}
+              className="grid grid-cols-4 gap-8"
+            >
+              {[
+                { icon: Car, value: 500, suffix: '+', label: 'Xe chất lượng cao', color: 'from-blue-500 to-blue-600' },
+                { icon: Users, value: 10000, suffix: '+', label: 'Khách hàng hài lòng', color: 'from-purple-500 to-purple-600' },
+                { icon: TrendingUp, value: 98, suffix: '%', label: 'Tỷ lệ hài lòng', color: 'from-green-500 to-green-600' },
+                { icon: Zap, value: 24, suffix: '/7', label: 'Hỗ trợ nhanh chóng', color: 'from-orange-500 to-orange-600' },
+              ].map((stat, i) => (
+                <motion.div
+                  key={i}
+                  variants={itemVariants}
+                  className="relative group"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-300" />
+                  <div className="relative bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-100 hover:border-blue-200 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center mb-4`}>
+                      <stat.icon size={24} className="text-white" />
+                    </div>
+                    <div className="text-3xl font-bold text-gray-900 mb-1">
+                      <AnimatedCounter end={stat.value} suffix={stat.suffix} />
+                    </div>
+                    <div className="text-sm text-gray-600">{stat.label}</div>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        </section>
+      </ParallaxSection>
+
+      {/* Why XeNow */}
+      <ParallaxSection speed={0.05}>
+        <section className="relative max-w-6xl mx-auto px-8 py-16 overflow-hidden">
           <motion.div
-            ref={statsRef}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-10"
+          >
+            <h2 className="text-4xl font-bold text-gray-900 mb-3">Tại sao chọn XeNow?</h2>
+            <p className="text-gray-500 text-lg">Dịch vụ chuyên nghiệp, uy tín và đáng tin cậy</p>
+          </motion.div>
+          
+          <motion.div
+            ref={featuresRef}
             variants={containerVariants}
             initial="hidden"
-            animate={statsInView ? "visible" : "hidden"}
-            className="grid grid-cols-4 gap-8"
+            animate={featuresInView ? "visible" : "hidden"}
+            className="grid grid-cols-4 gap-6"
           >
-            {[
-              { icon: Car, value: 500, suffix: '+', label: 'Xe chất lượng cao', color: 'from-blue-500 to-blue-600' },
-              { icon: Users, value: 10000, suffix: '+', label: 'Khách hàng hài lòng', color: 'from-purple-500 to-purple-600' },
-              { icon: TrendingUp, value: 98, suffix: '%', label: 'Tỷ lệ hài lòng', color: 'from-green-500 to-green-600' },
-              { icon: Zap, value: 24, suffix: '/7', label: 'Hỗ trợ nhanh chóng', color: 'from-orange-500 to-orange-600' },
-            ].map((stat, i) => (
+            {features.map((f) => (
               <motion.div
-                key={i}
+                key={f.title}
                 variants={itemVariants}
-                className="relative group"
+                whileHover={{ y: -8, scale: 1.02 }}
+                className={`relative rounded-2xl border p-6 ${f.color} group cursor-pointer overflow-hidden`}
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-300" />
-                <div className="relative bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-100 hover:border-blue-200 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center mb-4`}>
-                    <stat.icon size={24} className="text-white" />
-                  </div>
-                  <div className="text-3xl font-bold text-gray-900 mb-1">
-                    <AnimatedCounter end={stat.value} suffix={stat.suffix} />
-                  </div>
-                  <div className="text-sm text-gray-600">{stat.label}</div>
+                <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="relative">
+                  <motion.div
+                    whileHover={{ rotate: 360, scale: 1.1 }}
+                    transition={{ duration: 0.6 }}
+                    className={`w-12 h-12 rounded-2xl ${f.iconBg} flex items-center justify-center mb-4 shadow-lg`}
+                  >
+                    <f.icon size={22} className={f.iconColor} />
+                  </motion.div>
+                  <h3 className="font-semibold text-gray-900 mb-2">{f.title}</h3>
+                  <p className="text-sm text-gray-600">{f.desc}</p>
                 </div>
               </motion.div>
             ))}
           </motion.div>
-        </div>
-      </section>
+        </section>
+      </ParallaxSection>
 
-      {/* Why XeNow */}
-      <section className="relative max-w-6xl mx-auto px-8 py-16 overflow-hidden">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-10"
-        >
-          <h2 className="text-4xl font-bold text-gray-900 mb-3">Tại sao chọn XeNow?</h2>
-          <p className="text-gray-500 text-lg">Dịch vụ chuyên nghiệp, uy tín và đáng tin cậy</p>
-        </motion.div>
-        
-        <motion.div
-          ref={featuresRef}
-          variants={containerVariants}
-          initial="hidden"
-          animate={featuresInView ? "visible" : "hidden"}
-          className="grid grid-cols-4 gap-6"
-        >
-          {features.map((f, index) => (
-            <motion.div
-              key={f.title}
-              variants={itemVariants}
-              whileHover={{ y: -8, scale: 1.02 }}
-              className={`relative rounded-2xl border p-6 ${f.color} group cursor-pointer overflow-hidden`}
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="relative">
-                <motion.div
-                  whileHover={{ rotate: 360, scale: 1.1 }}
-                  transition={{ duration: 0.6 }}
-                  className={`w-12 h-12 rounded-2xl ${f.iconBg} flex items-center justify-center mb-4 shadow-lg`}
-                >
-                  <f.icon size={22} className={f.iconColor} />
-                </motion.div>
-                <h3 className="font-semibold text-gray-900 mb-2">{f.title}</h3>
-                <p className="text-sm text-gray-600">{f.desc}</p>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
-      </section>
+      <RentalProcess />
 
       {/* Available vehicles */}
       <section className="bg-[#F8FAFC] py-16">
@@ -233,14 +276,20 @@ export default function Home() {
             viewport={{ once: true }}
             className="grid grid-cols-3 gap-6"
           >
-            {filtered.slice(0, 6).map((v, index) => (
-              <motion.div
+            {filtered.slice(0, 6).map((v) => (
+              <Tilt
                 key={v.id}
-                variants={itemVariants}
-                whileHover={{ y: -8, scale: 1.02 }}
-                className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-300 cursor-pointer group"
-                onClick={() => navigate(`/vehicles/${v.id}`)}
+                tiltMaxAngleX={5}
+                tiltMaxAngleY={5}
+                scale={1.02}
+                transitionSpeed={2000}
               >
+                <motion.div
+                  variants={itemVariants}
+                  whileHover={{ y: -8 }}
+                  className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-300 cursor-pointer group h-full"
+                  onClick={() => navigate(`/vehicles/${v.id}`)}
+                >
                 <div className="relative h-48 bg-gray-100 overflow-hidden">
                   <img src={v.image} alt={v.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                   <div className="absolute top-3 right-3">
@@ -268,10 +317,13 @@ export default function Home() {
                   </div>
                 </div>
               </motion.div>
+              </Tilt>
             ))}
           </motion.div>
         </div>
       </section>
+
+      <Testimonials />
 
       {/* CTA */}
       <section className="relative bg-gradient-to-r from-[#155DFC] to-[#1447E6] py-20 overflow-hidden">
