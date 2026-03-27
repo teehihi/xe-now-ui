@@ -10,6 +10,7 @@ import MyBookings from './pages/user/MyBookings';
 import Profile from './pages/user/Profile';
 import Login from './pages/user/Login';
 import Register from './pages/user/Register';
+import VerifyIdentity from './pages/user/VerifyIdentity';
 
 // Admin pages
 import Dashboard from './pages/admin/Dashboard';
@@ -33,9 +34,10 @@ function App() {
           <Route path="profile" element={<Profile />} />
         </Route>
 
-        {/* Auth routes */}
+        {/* Auth & Verification routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/verify" element={<VerifyIdentity />} />
 
         {/* Admin routes */}
         <Route path="/admin" element={<AdminLayout />}>
