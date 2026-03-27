@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { Home, CalendarCheck, User, Settings } from 'lucide-react';
+import { Home, CalendarCheck, User, LogIn, UserPlus, LogOut } from 'lucide-react';
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 
 export default function UserLayout() {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [hidden, setHidden] = useState(false);
   const [forceHide, setForceHide] = useState(false);
   const { scrollY } = useScroll();
@@ -30,35 +32,67 @@ export default function UserLayout() {
         variants={{ visible: { y: 0 }, hidden: { y: "-100%" } }}
         animate={(hidden || forceHide) ? "hidden" : "visible"}
         transition={{ duration: 0.35, ease: "easeInOut" }}
-        className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-gray-200 shadow-sm"
+        className="sticky top-0 z-50 border-b border-[#E2E8F0]"
+        style={{ background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(8px)', boxShadow: '0px 1px 3px 0px rgba(0,0,0,0.1), 0px 1px 2px -1px rgba(0,0,0,0.1)' }}
       >
-        <div className="max-w-6xl mx-auto px-8 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-            <img src="/images/logo.webp" alt="XeNow" className="h-16" onError={(e) => {
-              e.target.style.display = 'none';
-              e.target.nextSibling.style.display = 'inline';
-            }} />
-            <span className="text-2xl font-bold" style={{ display: 'none' }}>
-              <span className="text-[#1B83A1]">Xe</span>Now
-            </span>
+        <div className="flex items-center justify-between px-8" style={{ height: 81 }}>
+          {/* Logo — màu gốc */}
+          <div className="cursor-pointer shrink-0" onClick={() => navigate('/')}>
+            <img src="/images/logo.webp" alt="XeNow" style={{ height: 52, width: 'auto' }}
+              onError={e => { e.target.style.display = 'none'; }} />
           </div>
-          <nav className="flex items-center gap-2">
-            <NavLink to="/" end className={({ isActive }) =>
-              `flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${isActive ? 'bg-[#1B83A1] text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
-              <Home size={16} /> Trang chủ
-            </NavLink>
-            <NavLink to="/my-bookings" className={({ isActive }) =>
-              `flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${isActive ? 'bg-[#1B83A1] text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
-              <CalendarCheck size={16} /> Booking của tôi
-            </NavLink>
-            <NavLink to="/profile" className={({ isActive }) =>
-              `flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${isActive ? 'bg-[#1B83A1] text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
-              <User size={16} /> Tài khoản
-            </NavLink>
-            <button onClick={() => navigate('/admin')}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-gray-200 text-gray-700 hover:bg-gray-50 ml-2">
-              <Settings size={16} /> Admin Panel
-            </button>
+
+          {/* Nav */}
+          <nav className="flex items-center gap-1">
+            {user ? (
+              /* ── Đã đăng nhập ── */
+              <>
+                <NavLink to="/" end className={({ isActive }) =>
+                  `flex items-center gap-2 px-4 rounded-lg text-sm font-medium transition-colors ${isActive ? 'bg-gradient-to-r from-[#1B83A1] to-[#3B82F6] text-white' : 'text-[#0A0A0A] hover:bg-gray-100'}`}
+                  style={{ height: 36 }}>
+                  <Home size={16} /> Trang chủ
+                </NavLink>
+                <NavLink to="/my-bookings" className={({ isActive }) =>
+                  `flex items-center gap-2 px-4 rounded-lg text-sm font-medium transition-colors ${isActive ? 'bg-gradient-to-r from-[#1B83A1] to-[#3B82F6] text-white' : 'text-[#0A0A0A] hover:bg-gray-100'}`}
+                  style={{ height: 36 }}>
+                  <CalendarCheck size={16} /> Booking của tôi
+                </NavLink>
+                <NavLink to="/profile" className={({ isActive }) =>
+                  `flex items-center gap-2 px-4 rounded-lg text-sm font-medium transition-colors ${isActive ? 'bg-gradient-to-r from-[#1B83A1] to-[#3B82F6] text-white' : 'text-[#0A0A0A] hover:bg-gray-100'}`}
+                  style={{ height: 36 }}>
+                  <User size={16} /> {user.name || 'Tài khoản'}
+                </NavLink>
+                <button onClick={() => navigate('/admin')}
+                  className="flex items-center px-4 rounded-lg text-sm font-medium text-[#0A0A0A] bg-white ml-1"
+                  style={{ height: 32, border: '1px solid rgba(0,0,0,0.1)' }}>
+                  Admin Panel
+                </button>
+                <button onClick={() => { logout(); navigate('/'); }}
+                  className="flex items-center gap-1.5 px-4 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 ml-1"
+                  style={{ height: 36 }}>
+                  <LogOut size={16} /> Đăng xuất
+                </button>
+              </>
+            ) : (
+              /* ── Chưa đăng nhập ── */
+              <>
+                <NavLink to="/" end className={({ isActive }) =>
+                  `flex items-center gap-2 px-4 rounded-lg text-sm font-medium transition-colors ${isActive ? 'bg-gradient-to-r from-[#1B83A1] to-[#3B82F6] text-white' : 'text-[#0A0A0A] hover:bg-gray-100'}`}
+                  style={{ height: 36 }}>
+                  <Home size={16} /> Trang chủ
+                </NavLink>
+                <button onClick={() => navigate('/login')}
+                  className="flex items-center gap-1.5 px-4 rounded-lg text-sm font-medium text-[#0A0A0A] hover:bg-gray-100 ml-1"
+                  style={{ height: 36 }}>
+                  <LogIn size={16} /> Đăng nhập
+                </button>
+                <button onClick={() => navigate('/register')}
+                  className="flex items-center gap-1.5 px-4 rounded-lg text-sm font-medium text-white ml-1"
+                  style={{ height: 36, background: 'linear-gradient(90deg,#1B83A1,#3B82F6)' }}>
+                  <UserPlus size={16} /> Đăng ký
+                </button>
+              </>
+            )}
           </nav>
         </div>
       </motion.header>

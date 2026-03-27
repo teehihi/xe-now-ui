@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
 import UserLayout from './layouts/UserLayout';
 import AdminLayout from './layouts/AdminLayout';
 
@@ -23,6 +24,7 @@ import Reports from './pages/admin/Reports';
 
 function App() {
   return (
+    <AuthProvider>
     <BrowserRouter>
       <Routes>
         {/* User routes */}
@@ -61,6 +63,7 @@ function App() {
         </div>} />
       </Routes>
     </BrowserRouter>
+    </AuthProvider>
   );
 }
 
