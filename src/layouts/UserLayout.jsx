@@ -62,11 +62,13 @@ export default function UserLayout() {
                   style={{ height: 36 }}>
                   <User size={16} /> {user.name || 'Tài khoản'}
                 </NavLink>
-                <button onClick={() => navigate('/admin')}
-                  className="flex items-center px-4 rounded-lg text-sm font-medium text-[#0A0A0A] bg-white ml-1"
-                  style={{ height: 32, border: '1px solid rgba(0,0,0,0.1)' }}>
-                  Admin Panel
-                </button>
+                {user.role === 'ADMIN' && (
+                  <button onClick={() => navigate('/admin')}
+                    className="flex items-center px-4 rounded-lg text-sm font-medium text-[#0A0A0A] bg-white ml-1"
+                    style={{ height: 32, border: '1px solid rgba(0,0,0,0.1)' }}>
+                    Admin Panel
+                  </button>
+                )}
                 <button onClick={() => { logout(); navigate('/'); }}
                   className="flex items-center gap-1.5 px-4 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 ml-1"
                   style={{ height: 36 }}>

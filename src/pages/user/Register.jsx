@@ -11,13 +11,50 @@ export default function Register() {
   const [showPw, setShowPw] = useState(false);
   const [showCPw, setShowCPw] = useState(false);
   const [agreed, setAgreed] = useState(false);
-  const [form, setForm] = useState({ fullName: '', email: '', password: '', confirmPassword: '' });
+  const [form, setForm] = useState({ 
+    fullName: '', 
+    email: '', 
+    password: '', 
+    confirmPassword: ''
+  });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (form.password !== form.confirmPassword) { alert('Mật khẩu không khớp!'); return; }
-    login({ name: form.fullName, email: form.email });
-    navigate('/');
+    if (form.password !== form.confirmPassword) { 
+      alert('Mật khẩu không khớp!'); 
+      return; 
+    }
+    if (!agreed) {
+      alert('Vui lòng đồng ý với điều khoản dịch vụ');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:8080/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          username: form.email.split('@')[0],
+          password: form.password,
+          fullName: form.fullName,
+          email: form.email
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Backend already created session, save full user data to AuthContext
+        login(data.user);
+        navigate('/verify');
+      } else {
+        const error = await response.text();
+        alert('Đăng ký thất bại: ' + error);
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      alert('Lỗi kết nối đến server');
+    }
   };
 
   return (

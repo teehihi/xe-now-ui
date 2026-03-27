@@ -11,10 +11,32 @@ export default function Login() {
   const [showPw, setShowPw] = useState(false);
   const [form, setForm] = useState({ email: '', password: '', remember: false });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    login({ name: form.email.split('@')[0], email: form.email });
-    navigate('/');
+    
+    try {
+      const response = await fetch('http://localhost:8080/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          username: form.email,
+          password: form.password
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        login(data.user);
+        navigate('/');
+      } else {
+        const error = await response.text();
+        alert('Đăng nhập thất bại: ' + error);
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      alert('Lỗi kết nối đến server');
+    }
   };
 
   return (
@@ -42,9 +64,9 @@ export default function Login() {
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="flex items-center gap-1.5 text-sm font-medium text-[#314158]">
-                <Mail size={14} /> Email
+                <Mail size={14} /> Email hoặc Username
               </label>
-              <input type="email" required className={inp} placeholder="email@example.com"
+              <input type="text" required className={inp} placeholder="example@xenow.vn"
                 value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
             </div>
 
@@ -53,7 +75,7 @@ export default function Login() {
                 <Lock size={14} /> Mật khẩu
               </label>
               <div className="relative">
-                <input type={showPw ? 'text' : 'password'} required className={inp + ' pr-10'} placeholder="••••••••"
+                <input type={showPw ? 'text' : 'password'} required className={inp + ' pr-10'} placeholder="Nhập mật khẩu"
                   value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} />
                 <button type="button" onClick={() => setShowPw(!showPw)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748B]">

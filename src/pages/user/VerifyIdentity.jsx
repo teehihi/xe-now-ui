@@ -87,14 +87,63 @@ function StepCCCD({ onNext }) {
   const [image, setImage] = useState(null);
   const [scanning, setScanning] = useState(false);
   const [scanned, setScanned] = useState(false);
-  const [form, setForm] = useState({ soCCCD: '', hoTen: '', ngaySinh: '', ngayCap: '', diaChi: '' });
-  const canContinue = scanned && form.soCCCD && form.hoTen && form.ngaySinh;
+  const [form, setForm] = useState({ soCCCD: '', hoTen: '', ngaySinh: '', ngayCap: '', ngayHetHan: '', diaChi: '' });
+  const canContinue = scanned && form.soCCCD && form.hoTen && form.ngaySinh && form.ngayCap;
   const inp = 'w-full px-4 py-2 rounded-full bg-[#F3F3F5] border-2 border-transparent outline-none focus:border-[#1B83A1] text-sm text-[#64748B]';
 
-  const handleImage = (url) => {
+  const handleImage = async (url) => {
     setImage(url);
-    if (url) { setScanning(true); setScanned(false); setTimeout(() => { setScanning(false); setScanned(true); }, 1800); }
+    if (url) { 
+      setScanning(true); 
+      setScanned(false); 
+      
+      // Call OCR API
+      try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const file = new File([blob], "cccd.jpg", { type: "image/jpeg" });
+        
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        const ocrResponse = await fetch('http://localhost:8080/api/customer/ocr/cccd', {
+          method: 'POST',
+          body: formData,
+          credentials: 'include'
+        });
+        
+        if (ocrResponse.ok) {
+          const data = await ocrResponse.json();
+          console.log('OCR CCCD data:', data);
+          setForm({
+            soCCCD: data.identityCard || '',
+            hoTen: data.fullName || '',
+            ngaySinh: data.dateOfBirth ? convertDateFormat(data.dateOfBirth) : '',
+            ngayCap: '',
+            ngayHetHan: data.identityCardExpiry ? convertDateFormat(data.identityCardExpiry) : '',
+            diaChi: data.address || '',
+            imageFile: file // Store the actual file
+          });
+        } else {
+          console.error('OCR API error:', await ocrResponse.text());
+        }
+      } catch (error) {
+        console.error('OCR error:', error);
+      } finally {
+        setScanning(false); 
+        setScanned(true);
+      }
+    }
     else { setScanning(false); setScanned(false); }
+  };
+
+  const convertDateFormat = (dateStr) => {
+    if (!dateStr) return '';
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+    return dateStr;
   };
 
   return (
@@ -143,10 +192,14 @@ function StepCCCD({ onNext }) {
                 <input type="date" className={inp} value={form.ngaySinh} onChange={e => setForm({ ...form, ngaySinh: e.target.value })} />
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-sm font-medium text-[#0F172A]">Ngày cấp</label>
+                <label className="flex items-center gap-1.5 text-sm font-medium text-[#0F172A]"><FileText size={14} /> Ngày cấp *</label>
                 <input type="date" className={inp} value={form.ngayCap} onChange={e => setForm({ ...form, ngayCap: e.target.value })} />
               </div>
-              <div className="col-span-2 flex flex-col gap-2">
+              <div className="flex flex-col gap-2">
+                <label className="flex items-center gap-1.5 text-sm font-medium text-[#0F172A]"><FileText size={14} /> Ngày hết hạn</label>
+                <input type="date" className={inp} value={form.ngayHetHan} onChange={e => setForm({ ...form, ngayHetHan: e.target.value })} />
+              </div>
+              <div className="flex flex-col gap-2">
                 <label className="flex items-center gap-1.5 text-sm font-medium text-[#0F172A]"><FileText size={14} /> Địa chỉ thường trú</label>
                 <input className={inp} placeholder="123 Đường ABC, Phường XYZ, Quận 1, TP.HCM" value={form.diaChi} onChange={e => setForm({ ...form, diaChi: e.target.value })} />
               </div>
@@ -172,13 +225,65 @@ function StepGPLX({ onNext, onBack }) {
   const [scanning, setScanning] = useState(false);
   const [scanned, setScanned] = useState(false);
   const [form, setForm] = useState({ soGPLX: '', hangGPLX: '', ngayCap: '', ngayHetHan: '' });
-  const canContinue = scanned && form.soGPLX && form.ngayHetHan;
+  const [isUnlimited, setIsUnlimited] = useState(false);
+  const canContinue = scanned && form.soGPLX && (form.ngayHetHan || isUnlimited);
   const inp = 'w-full px-4 py-2 rounded-full bg-[#F3F3F5] border-2 border-transparent outline-none focus:border-[#F38230] text-sm text-[#64748B]';
 
-  const handleImage = (url) => {
+  const handleImage = async (url) => {
     setImage(url);
-    if (url) { setScanning(true); setScanned(false); setTimeout(() => { setScanning(false); setScanned(true); }, 1800); }
+    if (url) { 
+      setScanning(true); 
+      setScanned(false); 
+      
+      // Call OCR API
+      try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const file = new File([blob], "gplx.jpg", { type: "image/jpeg" });
+        
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        const ocrResponse = await fetch('http://localhost:8080/api/customer/ocr/driver-license', {
+          method: 'POST',
+          body: formData,
+          credentials: 'include'
+        });
+        
+        if (ocrResponse.ok) {
+          const data = await ocrResponse.json();
+          console.log('OCR GPLX data:', data);
+          
+          // Check if license is unlimited
+          const unlimited = data.isUnlimited === 'true';
+          setIsUnlimited(unlimited);
+          
+          setForm({
+            soGPLX: data.driverLicense || '',
+            hangGPLX: data.licenseClass || '',
+            ngayCap: data.issueDate ? convertDateFormat(data.issueDate) : '',
+            ngayHetHan: unlimited ? 'Không thời hạn' : (data.expiryDate ? convertDateFormat(data.expiryDate) : '')
+          });
+        } else {
+          console.error('OCR API error:', await ocrResponse.text());
+        }
+      } catch (error) {
+        console.error('OCR error:', error);
+      } finally {
+        setScanning(false); 
+        setScanned(true);
+      }
+    }
     else { setScanning(false); setScanned(false); }
+  };
+
+  const convertDateFormat = (dateStr) => {
+    if (!dateStr) return '';
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+    return dateStr;
   };
 
   return (
@@ -231,8 +336,25 @@ function StepGPLX({ onNext, onBack }) {
                 <input type="date" className={inp} value={form.ngayCap} onChange={e => setForm({ ...form, ngayCap: e.target.value })} />
               </div>
               <div className="flex flex-col gap-2">
-                <label className="flex items-center gap-1.5 text-sm font-medium text-[#0F172A]"><AlertCircle size={14} /> Ngày hết hạn *</label>
-                <input type="date" className={inp} value={form.ngayHetHan} onChange={e => setForm({ ...form, ngayHetHan: e.target.value })} />
+                <label className="flex items-center gap-1.5 text-sm font-medium text-[#0F172A]">
+                  <AlertCircle size={14} /> Ngày hết hạn {!isUnlimited && '*'}
+                </label>
+                {isUnlimited ? (
+                  <input 
+                    type="text" 
+                    className={inp + ' cursor-not-allowed'} 
+                    value="Không thời hạn" 
+                    disabled 
+                    style={{ opacity: 0.7 }}
+                  />
+                ) : (
+                  <input 
+                    type="date" 
+                    className={inp} 
+                    value={form.ngayHetHan} 
+                    onChange={e => setForm({ ...form, ngayHetHan: e.target.value })} 
+                  />
+                )}
               </div>
             </div>
           </>
@@ -383,7 +505,67 @@ export default function VerifyIdentity() {
   const [cccd, setCccd] = useState(null);
   const [gplx, setGplx] = useState(null);
 
-  const handleSubmit = () => { setStep('processing'); setTimeout(() => setStep('success'), 3000); };
+  const handleSubmit = async () => { 
+    setStep('processing'); 
+    
+    try {
+      const formData = new FormData();
+      formData.append('identityCard', cccd.soCCCD);
+      if (cccd.ngayCap) {
+        formData.append('identityCardIssueDate', cccd.ngayCap);
+      }
+      if (cccd.ngayHetHan) {
+        formData.append('identityCardExpiry', cccd.ngayHetHan);
+      }
+      if (cccd.diaChi) {
+        formData.append('address', cccd.diaChi);
+      }
+      if (cccd.ngaySinh) {
+        formData.append('dateOfBirth', cccd.ngaySinh);
+      }
+      
+      formData.append('driverLicense', gplx.soGPLX);
+      if (gplx.hangGPLX) {
+        formData.append('driverLicenseClass', gplx.hangGPLX);
+      }
+      if (gplx.ngayCap) {
+        formData.append('driverLicenseIssueDate', gplx.ngayCap);
+      }
+      if (gplx.ngayHetHan && gplx.ngayHetHan !== 'Không thời hạn') {
+        formData.append('driverLicenseExpiry', gplx.ngayHetHan);
+      }
+      
+      const response = await fetch('http://localhost:8080/api/customer/verify', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+      });
+
+      if (response.ok) {
+        setTimeout(() => setStep('success'), 2000);
+      } else {
+        // Check if it's a validation error with step info
+        try {
+          const errorData = await response.json();
+          if (errorData.step) {
+            alert(errorData.message);
+            setStep(errorData.step); // Go back to the error step
+            return;
+          }
+        } catch (e) {
+          // Not JSON, treat as text
+        }
+        
+        const error = await response.text();
+        alert('Xác thực thất bại: ' + error);
+        setStep(3);
+      }
+    } catch (error) {
+      console.error('Verification error:', error);
+      alert('Lỗi kết nối đến server');
+      setStep(3);
+    }
+  };
   const isNumeric = typeof step === 'number';
 
   return (
