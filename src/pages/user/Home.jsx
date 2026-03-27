@@ -209,53 +209,6 @@ export default function Home() {
         </section>
       </ParallaxSection>
 
-      {/* Why XeNow */}
-      <ParallaxSection speed={0.05}>
-        <section className="relative max-w-6xl mx-auto px-8 py-16 overflow-hidden">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-10"
-          >
-            <h2 className="text-4xl font-bold text-gray-900 mb-3">Tại sao chọn XeNow?</h2>
-            <p className="text-gray-500 text-lg">Dịch vụ chuyên nghiệp, uy tín và đáng tin cậy</p>
-          </motion.div>
-          
-          <motion.div
-            ref={featuresRef}
-            variants={containerVariants}
-            initial="hidden"
-            animate={featuresInView ? "visible" : "hidden"}
-            className="grid grid-cols-4 gap-6"
-          >
-            {features.map((f) => (
-              <motion.div
-                key={f.title}
-                variants={itemVariants}
-                whileHover={{ y: -8, scale: 1.02 }}
-                className={`relative rounded-2xl border p-6 ${f.color} group cursor-pointer overflow-hidden`}
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <div className="relative">
-                  <motion.div
-                    whileHover={{ rotate: 360, scale: 1.1 }}
-                    transition={{ duration: 0.6 }}
-                    className={`w-12 h-12 rounded-2xl ${f.iconBg} flex items-center justify-center mb-4 shadow-lg`}
-                  >
-                    <f.icon size={22} className={f.iconColor} />
-                  </motion.div>
-                  <h3 className="font-semibold text-gray-900 mb-2">{f.title}</h3>
-                  <p className="text-sm text-gray-600">{f.desc}</p>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </section>
-      </ParallaxSection>
-
-      <RentalProcess />
 
       {/* Available vehicles */}
       <section className="bg-[#F8FAFC] py-16">
@@ -323,8 +276,54 @@ export default function Home() {
         </div>
       </section>
 
-      <Testimonials />
 
+        <RentalProcess />
+         {/* Why XeNow */}
+      <ParallaxSection speed={0.05}>
+        <section className="relative max-w-6xl mx-auto px-8 py-16 overflow-hidden">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-10"
+          >
+            <h2 className="text-4xl font-bold text-gray-900 mb-3">Tại sao chọn XeNow?</h2>
+            <p className="text-gray-500 text-lg">Dịch vụ chuyên nghiệp, uy tín và đáng tin cậy</p>
+          </motion.div>
+          
+          <motion.div
+            ref={featuresRef}
+            variants={containerVariants}
+            initial="hidden"
+            animate={featuresInView ? "visible" : "hidden"}
+            className="grid grid-cols-4 gap-6"
+          >
+            {features.map((f) => (
+              <motion.div
+                key={f.title}
+                variants={itemVariants}
+                whileHover={{ y: -8, scale: 1.02 }}
+                className={`relative rounded-2xl border p-6 ${f.color} group cursor-pointer overflow-hidden`}
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="relative">
+                  <motion.div
+                    whileHover={{ rotate: 360, scale: 1.1 }}
+                    transition={{ duration: 0.6 }}
+                    className={`w-12 h-12 rounded-2xl ${f.iconBg} flex items-center justify-center mb-4 shadow-lg`}
+                  >
+                    <f.icon size={22} className={f.iconColor} />
+                  </motion.div>
+                  <h3 className="font-semibold text-gray-900 mb-2">{f.title}</h3>
+                  <p className="text-sm text-gray-600">{f.desc}</p>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </section>
+      </ParallaxSection>
+<Testimonials />
       {/* CTA */}
       <section className="relative bg-gradient-to-r from-[#155DFC] to-[#1447E6] py-20 overflow-hidden">
         <FloatingOrbs />
