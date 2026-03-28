@@ -18,7 +18,6 @@ export default function Login() {
       const response = await fetch('http://localhost:8080/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({
           username: form.email,
           password: form.password
@@ -27,13 +26,9 @@ export default function Login() {
 
       const data = await response.json();
       
-      if (data.authenticated) {
-        // Create user object from response
-        const user = {
-          username: data.username,
-          role: data.role
-        };
-        login(user);
+      if (data.authenticated && data.token) {
+        // Save user and token
+        login(data.user, data.token);
         navigate('/');
       } else {
         alert(data.message || 'Đăng nhập thất bại');

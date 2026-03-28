@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 export default function Profile() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -21,45 +21,72 @@ export default function Profile() {
   });
 
   useEffect(() => {
-    if (!user) {
+    if (!user || !token) {
       navigate('/login');
       return;
     }
     fetchUserData();
-  }, [user, navigate]);
+  }, [user, token, navigate]);
 
   const fetchUserData = async () => {
     try {
       setLoading(true);
       
-      // Fetch current user info with dateOfBirth
+      console.log('Token:', token);
+      
+      if (!token) {
+        console.error('No token available');
+        navigate('/login');
+        return;
+      }
+      
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
+      
+      console.log('Fetching user data with headers:', headers);
+      
+      // Fetch current user info
       const userResponse = await fetch('http://localhost:8080/api/auth/me', {
-        credentials: 'include'
+        headers
       });
+      
+      console.log('User response status:', userResponse.status);
       
       let currentUser = user;
       if (userResponse.ok) {
         const userData = await userResponse.json();
+        console.log('User data:', userData);
         currentUser = userData.user;
+      } else {
+        const errorText = await userResponse.text();
+        console.error('Failed to fetch user:', errorText);
       }
       
       // Check verification status
       const verifyResponse = await fetch('http://localhost:8080/api/customer/verify-status', {
-        credentials: 'include'
+        headers
       });
+      
+      console.log('Verify response status:', verifyResponse.status);
       
       if (verifyResponse.ok) {
         const verifyData = await verifyResponse.json();
+        console.log('Verify data:', verifyData);
         setIsVerified(verifyData.verified);
         
         if (verifyData.verified) {
           // Fetch customer data
           const customerResponse = await fetch(`http://localhost:8080/api/customer/${verifyData.userId}`, {
-            credentials: 'include'
+            headers
           });
+          
+          console.log('Customer response status:', customerResponse.status);
           
           if (customerResponse.ok) {
             const customer = await customerResponse.json();
+            console.log('Customer data:', customer);
             setCustomerData(customer);
             setFormData({
               fullName: currentUser.fullName || '',
@@ -70,6 +97,9 @@ export default function Profile() {
               dateOfBirth: currentUser.dateOfBirth || '',
               drivingLicense: customer.driverLicense || ''
             });
+          } else {
+            const errorText = await customerResponse.text();
+            console.error('Failed to fetch customer:', errorText);
           }
         } else {
           // Not verified - only show basic user info
@@ -83,6 +113,9 @@ export default function Profile() {
             drivingLicense: ''
           });
         }
+      } else {
+        const errorText = await verifyResponse.text();
+        console.error('Failed to check verification status:', errorText);
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
