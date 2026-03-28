@@ -25,13 +25,18 @@ export default function Login() {
         })
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        login(data.user);
+      const data = await response.json();
+      
+      if (data.authenticated) {
+        // Create user object from response
+        const user = {
+          username: data.username,
+          role: data.role
+        };
+        login(user);
         navigate('/');
       } else {
-        const error = await response.text();
-        alert('Đăng nhập thất bại: ' + error);
+        alert(data.message || 'Đăng nhập thất bại');
       }
     } catch (error) {
       console.error('Login error:', error);
