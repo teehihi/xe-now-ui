@@ -48,7 +48,7 @@ export default function Testimonials() {
   const duplicatedTestimonials = [...testimonials, ...testimonials];
 
   return (
-    <section id="testimonials-section" className="py-24 bg-[#0a0f1c] relative overflow-hidden">
+    <section id="testimonials-section" className="py-24 bg-[#0a0f1c] relative overflow-hidden snap-start snap-always">
       {/* Background flares */}
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-[100px] pointer-events-none" />

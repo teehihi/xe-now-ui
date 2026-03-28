@@ -5,6 +5,7 @@ import AdminLayout from './layouts/AdminLayout';
 
 // User pages
 import Home from './pages/user/Home';
+import UserVehicles from './pages/user/Vehicles';
 import VehicleDetail from './pages/user/VehicleDetail';
 import BookingForm from './pages/user/BookingForm';
 import MyBookings from './pages/user/MyBookings';
@@ -15,7 +16,7 @@ import VerifyIdentity from './pages/user/VerifyIdentity';
 
 // Admin pages
 import Dashboard from './pages/admin/Dashboard';
-import Vehicles from './pages/admin/Vehicles';
+import AdminVehicles from './pages/admin/Vehicles';
 import Bookings from './pages/admin/Bookings';
 import Customers from './pages/admin/Customers';
 import Branches from './pages/admin/Branches';
@@ -30,6 +31,7 @@ function App() {
         {/* User routes */}
         <Route path="/" element={<UserLayout />}>
           <Route index element={<Home />} />
+          <Route path="vehicles" element={<UserVehicles />} />
           <Route path="vehicles/:id" element={<VehicleDetail />} />
           <Route path="booking" element={<BookingForm />} />
           <Route path="my-bookings" element={<MyBookings />} />
@@ -45,7 +47,7 @@ function App() {
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
-          <Route path="vehicles" element={<Vehicles />} />
+          <Route path="vehicles" element={<AdminVehicles />} />
           <Route path="bookings" element={<Bookings />} />
           <Route path="customers" element={<Customers />} />
           <Route path="branches" element={<Branches />} />

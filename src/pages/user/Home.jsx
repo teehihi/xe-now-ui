@@ -34,6 +34,9 @@ export default function Home() {
   const heroScale = useTransform(scrollY, [0, 300], [1, 0.8]);
 
   useEffect(() => {
+    // Add scroll snap specifically for home page
+    document.documentElement.style.scrollSnapType = 'y mandatory';
+
     const handleMouseMove = (e) => {
       setMousePosition({
         x: (e.clientX / window.innerWidth - 0.5) * 20,
@@ -41,77 +44,13 @@ export default function Home() {
       });
     };
     window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      document.documentElement.style.scrollSnapType = '';
+    };
   }, []);
 
-  // Auto scroll to CTA after RentalProcess and Testimonials after CTA (only when scrolling down)
-  useEffect(() => {
-    let isScrolling = false;
-    let lastScrollY = window.scrollY;
-    let scrollTimeout = null;
-    
-    const handleScroll = () => {
-      if (isScrolling) return;
-      
-      const currentScrollY = window.scrollY;
-      const isScrollingDown = currentScrollY > lastScrollY;
-      lastScrollY = currentScrollY;
-      
-      // Only snap when scrolling down
-      if (!isScrollingDown) return;
-      
-      // Clear previous timeout
-      if (scrollTimeout) {
-        clearTimeout(scrollTimeout);
-      }
-      
-      // Debounce: wait for user to stop scrolling
-      scrollTimeout = setTimeout(() => {
-        const ctaSection = document.getElementById('cta-section');
-        const testimonialsSection = document.getElementById('testimonials-section');
-        const windowHeight = window.innerHeight;
-        
-        // Check CTA section
-        if (ctaSection) {
-          const ctaTop = ctaSection.getBoundingClientRect().top;
-          
-          // If CTA is partially visible (between 20% and 80% of viewport)
-          if (ctaTop < windowHeight * 0.8 && ctaTop > windowHeight * 0.2) {
-            isScrolling = true;
-            
-            ctaSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            
-            setTimeout(() => {
-              isScrolling = false;
-            }, 1000);
-            return;
-          }
-        }
-        
-        // Check Testimonials section
-        if (testimonialsSection) {
-          const testimonialsTop = testimonialsSection.getBoundingClientRect().top;
-          
-          // If Testimonials is partially visible (between 20% and 80% of viewport)
-          if (testimonialsTop < windowHeight * 0.8 && testimonialsTop > windowHeight * 0.2) {
-            isScrolling = true;
-            
-            testimonialsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            
-            setTimeout(() => {
-              isScrolling = false;
-            }, 1000);
-          }
-        }
-      }, 100); // Wait 100ms after user stops scrolling
-    };
-    
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      if (scrollTimeout) clearTimeout(scrollTimeout);
-    };
-  }, []);
+
 
   const availableVehicles = vehicles.filter(v => v.status === 'available');
   const filtered = availableVehicles.filter(v =>
@@ -144,7 +83,7 @@ export default function Home() {
       <ScrollProgress />
       
       {/* Hero */}
-      <section className="relative h-[600px] overflow-hidden">
+      <section className="relative h-[600px] overflow-hidden snap-start scroll-mt-[81px]">
         <FloatingOrbs />
         <ParticleField />
         <SpeedLines />
@@ -239,14 +178,17 @@ export default function Home() {
       </section>
 
       {/* Available vehicles */}
-      <section className="bg-[#F8FAFC] py-16">
+      <section className="bg-[#F8FAFC] pt-24 pb-16 snap-start">
         <div className="max-w-6xl mx-auto px-8">
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-3xl font-bold text-gray-900">Xe hiện có</h2>
               <p className="text-gray-500 mt-1">{availableVehicles.length} xe đang sẵn sàng cho bạn</p>
             </div>
-            <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-white bg-white">
+            <button 
+              onClick={() => navigate('/vehicles')}
+              className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-white bg-white transition-all hover:shadow-md hover:border-blue-300"
+            >
               Xem tất cả <ArrowRight size={16} />
             </button>
           </div>
@@ -305,7 +247,7 @@ export default function Home() {
       </section>
       {/* Why XeNow */}
       <ParallaxSection speed={0.05}>
-        <section className="relative max-w-6xl mx-auto px-8 py-20 overflow-hidden">
+        <section className="relative max-w-6xl mx-auto px-8 pt-28 pb-20 overflow-hidden snap-start">
           {/* Background Effects */}
           <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 opacity-50" />
           <div className="absolute top-20 left-20 w-72 h-72 bg-blue-400/20 rounded-full blur-3xl" />
@@ -405,7 +347,7 @@ export default function Home() {
 
       <RentalProcess />
       {/* CTA */}
-      <section id="cta-section" className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <section id="cta-section" className="relative min-h-screen flex items-center justify-center overflow-hidden snap-start snap-always">
         <div className="absolute inset-0 bg-gradient-to-br from-[#EFF6FF] via-white to-[#F0F9FF]" />
         <FloatingOrbs />
         

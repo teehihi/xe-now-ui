@@ -125,7 +125,7 @@ export default function RentalProcess() {
   });
 
   return (
-    <div ref={containerRef} className="relative bg-[#0a0f1c] h-[300vh]">
+    <div ref={containerRef} className="relative bg-[#0a0f1c] h-[300vh] snap-start snap-always">
       {/* Sticky Container */}
       <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center">
         {/* Background Grid Pattern */}
