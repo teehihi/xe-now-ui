@@ -44,6 +44,75 @@ export default function Home() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
+  // Auto scroll to CTA after RentalProcess and Testimonials after CTA (only when scrolling down)
+  useEffect(() => {
+    let isScrolling = false;
+    let lastScrollY = window.scrollY;
+    let scrollTimeout = null;
+    
+    const handleScroll = () => {
+      if (isScrolling) return;
+      
+      const currentScrollY = window.scrollY;
+      const isScrollingDown = currentScrollY > lastScrollY;
+      lastScrollY = currentScrollY;
+      
+      // Only snap when scrolling down
+      if (!isScrollingDown) return;
+      
+      // Clear previous timeout
+      if (scrollTimeout) {
+        clearTimeout(scrollTimeout);
+      }
+      
+      // Debounce: wait for user to stop scrolling
+      scrollTimeout = setTimeout(() => {
+        const ctaSection = document.getElementById('cta-section');
+        const testimonialsSection = document.getElementById('testimonials-section');
+        const windowHeight = window.innerHeight;
+        
+        // Check CTA section
+        if (ctaSection) {
+          const ctaTop = ctaSection.getBoundingClientRect().top;
+          
+          // If CTA is partially visible (between 20% and 80% of viewport)
+          if (ctaTop < windowHeight * 0.8 && ctaTop > windowHeight * 0.2) {
+            isScrolling = true;
+            
+            ctaSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+            setTimeout(() => {
+              isScrolling = false;
+            }, 1000);
+            return;
+          }
+        }
+        
+        // Check Testimonials section
+        if (testimonialsSection) {
+          const testimonialsTop = testimonialsSection.getBoundingClientRect().top;
+          
+          // If Testimonials is partially visible (between 20% and 80% of viewport)
+          if (testimonialsTop < windowHeight * 0.8 && testimonialsTop > windowHeight * 0.2) {
+            isScrolling = true;
+            
+            testimonialsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+            setTimeout(() => {
+              isScrolling = false;
+            }, 1000);
+          }
+        }
+      }, 100); // Wait 100ms after user stops scrolling
+    };
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (scrollTimeout) clearTimeout(scrollTimeout);
+    };
+  }, []);
+
   const availableVehicles = vehicles.filter(v => v.status === 'available');
   const filtered = availableVehicles.filter(v =>
     (searchType === 'Tất cả' || v.type === searchType) &&
@@ -169,47 +238,6 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* Stats Section */}
-      <ParallaxSection speed={0.1}>
-        <section className="relative py-16 bg-gradient-to-b from-white to-[#F8FAFC] overflow-hidden">
-          <FloatingOrbs />
-          <div className="relative z-10 max-w-6xl mx-auto px-8">
-            <motion.div
-              ref={statsRef}
-              variants={containerVariants}
-              initial="hidden"
-              animate={statsInView ? "visible" : "hidden"}
-              className="grid grid-cols-4 gap-8"
-            >
-              {[
-                { icon: Car, value: 500, suffix: '+', label: 'Xe chất lượng cao', color: 'from-blue-500 to-blue-600' },
-                { icon: Users, value: 10000, suffix: '+', label: 'Khách hàng hài lòng', color: 'from-purple-500 to-purple-600' },
-                { icon: TrendingUp, value: 98, suffix: '%', label: 'Tỷ lệ hài lòng', color: 'from-green-500 to-green-600' },
-                { icon: Zap, value: 24, suffix: '/7', label: 'Hỗ trợ nhanh chóng', color: 'from-orange-500 to-orange-600' },
-              ].map((stat, i) => (
-                <motion.div
-                  key={i}
-                  variants={itemVariants}
-                  className="relative group"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-300" />
-                  <div className="relative bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-100 hover:border-blue-200 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center mb-4`}>
-                      <stat.icon size={24} className="text-white" />
-                    </div>
-                    <div className="text-3xl font-bold text-gray-900 mb-1">
-                      <AnimatedCounter end={stat.value} suffix={stat.suffix} />
-                    </div>
-                    <div className="text-sm text-gray-600">{stat.label}</div>
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
-          </div>
-        </section>
-      </ParallaxSection>
-
-
       {/* Available vehicles */}
       <section className="bg-[#F8FAFC] py-16">
         <div className="max-w-6xl mx-auto px-8">
@@ -275,21 +303,39 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
-
-
-        <RentalProcess />
-         {/* Why XeNow */}
+      {/* Why XeNow */}
       <ParallaxSection speed={0.05}>
-        <section className="relative max-w-6xl mx-auto px-8 py-16 overflow-hidden">
+        <section className="relative max-w-6xl mx-auto px-8 py-20 overflow-hidden">
+          {/* Background Effects */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 opacity-50" />
+          <div className="absolute top-20 left-20 w-72 h-72 bg-blue-400/20 rounded-full blur-3xl" />
+          <div className="absolute bottom-20 right-20 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl" />
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-10"
+            className="relative text-center mb-12"
           >
-            <h2 className="text-4xl font-bold text-gray-900 mb-3">Tại sao chọn XeNow?</h2>
-            <p className="text-gray-500 text-lg">Dịch vụ chuyên nghiệp, uy tín và đáng tin cậy</p>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              whileInView={{ scale: 1, opacity: 1 }}
+              viewport={{ once: true }}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-xl border border-white/40 rounded-full text-sm font-medium mb-4 shadow-lg"
+            >
+              <span className="w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full animate-pulse" />
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Dịch vụ chuyên nghiệp
+              </span>
+            </motion.div>
+
+            <h2 className="text-5xl font-bold mb-3">
+              <span className="bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 bg-clip-text text-transparent">
+                Tại sao chọn XeNow?
+              </span>
+            </h2>
+            <p className="text-gray-600 text-lg">Dịch vụ uy tín và đáng tin cậy</p>
           </motion.div>
           
           <motion.div
@@ -297,58 +343,139 @@ export default function Home() {
             variants={containerVariants}
             initial="hidden"
             animate={featuresInView ? "visible" : "hidden"}
-            className="grid grid-cols-4 gap-6"
+            className="relative grid grid-cols-4 gap-6"
           >
-            {features.map((f) => (
+            {features.map((f, index) => (
               <motion.div
                 key={f.title}
                 variants={itemVariants}
-                whileHover={{ y: -8, scale: 1.02 }}
-                className={`relative rounded-2xl border p-6 ${f.color} group cursor-pointer overflow-hidden`}
+                whileHover={{ y: -12, scale: 1.03 }}
+                className="relative group cursor-pointer"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <div className="relative">
-                  <motion.div
-                    whileHover={{ rotate: 360, scale: 1.1 }}
-                    transition={{ duration: 0.6 }}
-                    className={`w-12 h-12 rounded-2xl ${f.iconBg} flex items-center justify-center mb-4 shadow-lg`}
-                  >
-                    <f.icon size={22} className={f.iconColor} />
-                  </motion.div>
-                  <h3 className="font-semibold text-gray-900 mb-2">{f.title}</h3>
-                  <p className="text-sm text-gray-600">{f.desc}</p>
+                {/* Gradient Border Effect */}
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-2xl opacity-0 group-hover:opacity-100 blur transition-all duration-500" />
+
+                {/* Card */}
+                <div className="relative h-full bg-white/80 backdrop-blur-xl rounded-2xl p-6 border border-white/40 shadow-xl overflow-hidden">
+                  {/* Shine Effect */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                  {/* Animated Background Gradient */}
+                  <div className={`absolute inset-0 bg-gradient-to-br ${f.color.replace('bg-', 'from-').replace('-50', '-50/30')} to-transparent opacity-50 group-hover:opacity-70 transition-opacity duration-500`} />
+
+                  <div className="relative z-10">
+                    {/* Icon Container with Glow */}
+                    <motion.div
+                      whileHover={{ rotate: [0, -10, 10, -10, 0], scale: 1.1 }}
+                      transition={{ duration: 0.5 }}
+                      className="relative mb-4"
+                    >
+                      <div className={`absolute inset-0 ${f.iconBg} rounded-2xl blur-xl opacity-50 group-hover:opacity-100 transition-opacity duration-500`} />
+                      <div className={`relative w-14 h-14 rounded-2xl ${f.iconBg} flex items-center justify-center shadow-lg border border-white/40`}>
+                        <f.icon size={24} className={f.iconColor} />
+                      </div>
+                    </motion.div>
+
+                    {/* Content */}
+                    <h3 className="font-bold text-gray-900 mb-2 text-lg">{f.title}</h3>
+                    <p className="text-sm text-gray-600 leading-relaxed">{f.desc}</p>
+
+                    {/* Hover Arrow */}
+                    <motion.div
+                      initial={{ opacity: 0, x: -10 }}
+                      whileHover={{ opacity: 1, x: 0 }}
+                      className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-all duration-300"
+                    >
+                      <ArrowRight size={20} className={f.iconColor} />
+                    </motion.div>
+                  </div>
+
+                  {/* Corner Accent */}
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-white/40 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 </div>
               </motion.div>
             ))}
           </motion.div>
+
+          {/* Decorative Elements */}
+          <div className="absolute top-10 right-10 w-2 h-2 bg-blue-500 rounded-full animate-ping" />
+          <div className="absolute bottom-10 left-10 w-2 h-2 bg-purple-500 rounded-full animate-ping" style={{ animationDelay: '1s' }} />
         </section>
       </ParallaxSection>
-<Testimonials />
+
+      <RentalProcess />
       {/* CTA */}
-      <section className="relative bg-gradient-to-r from-[#155DFC] to-[#1447E6] py-20 overflow-hidden">
+      <section id="cta-section" className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#EFF6FF] via-white to-[#F0F9FF]" />
         <FloatingOrbs />
-        <div className="absolute inset-0 bg-[url('/images/hero-bg.webp')] bg-cover bg-center opacity-10" />
         
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
-          className="relative z-10 max-w-6xl mx-auto px-8 text-center"
+          className="relative z-10 max-w-4xl mx-auto px-8 text-center"
         >
-          <h2 className="text-4xl font-bold text-white mb-4">Sẵn sàng bắt đầu hành trình?</h2>
-          <p className="text-blue-100 text-xl mb-8">Đăng ký ngay để nhận ưu đãi đặc biệt cho lần thuê xe đầu tiên</p>
-          
-          <motion.button
-            whileHover={{ scale: 1.05, boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => navigate('/register')}
-            className="px-10 py-4 bg-white text-[#155DFC] font-semibold rounded-xl hover:bg-blue-50 transition-colors shadow-2xl"
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            whileInView={{ scale: 1, opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 rounded-full text-sm text-blue-600 font-medium mb-6"
           >
-            Đăng ký ngay
-          </motion.button>
+            <Zap size={16} className="text-blue-500" />
+            Ưu đãi đặc biệt cho khách hàng mới
+          </motion.div>
+
+          <h2 className="text-5xl font-bold text-gray-900 mb-4 leading-tight">
+            Sẵn sàng bắt đầu<br />
+            <span className="bg-gradient-to-r from-[#1B83A1] to-[#3B82F6] bg-clip-text text-transparent">
+              hành trình của bạn?
+            </span>
+          </h2>
+
+          <p className="text-gray-600 text-lg mb-10 max-w-2xl mx-auto">
+            Đăng ký ngay hôm nay để nhận ưu đãi đặc biệt cho lần thuê xe đầu tiên và trải nghiệm dịch vụ tốt nhất
+          </p>
+          
+          <div className="flex items-center justify-center gap-4">
+            <motion.button
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => navigate('/register')}
+              className="px-8 py-4 bg-gradient-to-r from-[#1B83A1] to-[#3B82F6] text-white font-semibold rounded-xl hover:shadow-xl transition-all flex items-center gap-2"
+            >
+              Đăng ký ngay
+              <ArrowRight size={18} />
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => navigate('/vehicles')}
+              className="px-8 py-4 bg-white text-gray-700 font-semibold rounded-xl border border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all"
+            >
+              Xem xe ngay
+            </motion.button>
+          </div>
+
+          <div className="mt-12 flex items-center justify-center gap-8 text-sm text-gray-500">
+            <div className="flex items-center gap-2">
+              <Shield size={16} className="text-green-500" />
+              <span>Bảo hiểm toàn diện</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Clock size={16} className="text-blue-500" />
+              <span>Hỗ trợ 24/7</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Star size={16} className="text-orange-500" />
+              <span>Đánh giá 4.9/5</span>
+            </div>
+          </div>
         </motion.div>
       </section>
+      <Testimonials />
     </>
   );
 }

@@ -6,7 +6,7 @@ const testimonials = [
     id: 1,
     name: 'Nguyễn Văn An',
     role: 'CEO, TechCorp',
-    avatar: 'https://i.pravatar.cc/150?img=11',
+    avatar: 'https://ui-avatars.com/api/?name=Nguyen+Van+An&background=3b82f6&color=fff&size=128&bold=true',
     rating: 5,
     quote: 'Quy trình thuê xe nhanh chóng chưa từng có. Ứng dụng mượt mà, công nghệ Smart Key thực sự rất tiện lợi, tôi không cần phải gặp nhân viên để lấy chìa.'
   },
@@ -14,7 +14,7 @@ const testimonials = [
     id: 2,
     name: 'Trần Thị Thu',
     role: 'Freelancer',
-    avatar: 'https://i.pravatar.cc/150?img=5',
+    avatar: 'https://ui-avatars.com/api/?name=Tran+Thi+Thu&background=a855f7&color=fff&size=128&bold=true',
     rating: 5,
     quote: 'Giá cả minh bạch, không phụ phí ẩn. Chất lượng xe cực kỳ tốt, nội thất sạch sẽ thơm tho. Tôi đã thuê xe ở XeNow 3 lần và luôn cảm thấy hài lòng.'
   },
@@ -22,7 +22,7 @@ const testimonials = [
     id: 3,
     name: 'Lê Hoàng Minh',
     role: 'Nhiếp ảnh gia',
-    avatar: 'https://i.pravatar.cc/150?img=12',
+    avatar: 'https://ui-avatars.com/api/?name=Le+Hoang+Minh&background=10b981&color=fff&size=128&bold=true',
     rating: 4,
     quote: 'Rất ấn tượng với giao diện ứng dụng. Tìm kiếm xe lân cận rất nhanh. Đội ngũ hỗ trợ nhiệt tình khi tôi cần đổi lịch trình giữa chừng.'
   },
@@ -30,7 +30,7 @@ const testimonials = [
     id: 4,
     name: 'Phạm Thanh Hương',
     role: 'Trưởng nhóm Marketing',
-    avatar: 'https://i.pravatar.cc/150?img=20',
+    avatar: 'https://ui-avatars.com/api/?name=Pham+Thanh+Huong&background=f59e0b&color=fff&size=128&bold=true',
     rating: 5,
     quote: 'Trải nghiệm thuê xe sang cho chuyến công tác quá tuyệt vời. Các xe thuộc phân khúc cao cấp luôn sẵn sàng với mức giá hợp lý. Tuyệt vời!'
   },
@@ -38,7 +38,7 @@ const testimonials = [
     id: 5,
     name: 'Vũ Đức Duy',
     role: 'Kỹ sư phần mềm',
-    avatar: 'https://i.pravatar.cc/150?img=33',
+    avatar: 'https://ui-avatars.com/api/?name=Vu+Duc+Duy&background=ef4444&color=fff&size=128&bold=true',
     rating: 5,
     quote: 'Cách thức thanh toán rất đa dạng. XeNow đã mang đến trải nghiệm thuê xe hoàn toàn mới mẻ, hiện đại như các sản phẩm công nghệ tiên tiến nhất.'
   }
@@ -48,7 +48,7 @@ export default function Testimonials() {
   const duplicatedTestimonials = [...testimonials, ...testimonials];
 
   return (
-    <section className="py-24 bg-[#0a0f1c] relative overflow-hidden border-t border-white/5">
+    <section id="testimonials-section" className="py-24 bg-[#0a0f1c] relative overflow-hidden">
       {/* Background flares */}
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-[100px] pointer-events-none" />
