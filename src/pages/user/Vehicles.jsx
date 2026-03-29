@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../../services/api';
 
 const Vehicles = () => {
   const navigate = useNavigate();
@@ -19,9 +20,7 @@ const Vehicles = () => {
     const fetchVehicles = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:8080/api/vehicles');
-        if (!response.ok) throw new Error('Failed to fetch vehicles');
-        const data = await response.json();
+        const data = await api.get('/vehicles');
         
         // Transform data to match frontend format
         const transformedData = data.map(vehicle => ({

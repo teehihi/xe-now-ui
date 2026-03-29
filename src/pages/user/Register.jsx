@@ -43,10 +43,8 @@ export default function Register() {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        // Backend already created session, save full user data to AuthContext
-        login(data.user);
-        navigate('/verify');
+        alert('Đăng ký thành công! Vui lòng đăng nhập.');
+        navigate('/login');
       } else {
         const error = await response.text();
         alert('Đăng ký thất bại: ' + error);

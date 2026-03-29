@@ -1,9 +1,31 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Calendar, Car, MapPin, Clock, CreditCard, FileText } from 'lucide-react';
-import { bookings, vehicles } from '../../data/mockData';
+import { api } from '../../services/api';
 
 export default function MyBookings() {
   const [filter, setFilter] = useState('all');
+  const [bookings, setBookings] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [bookingsData, vehiclesData] = await Promise.all([
+          api.get('/bookings/my-bookings'),
+          api.get('/vehicles')
+        ]);
+        setBookings(bookingsData);
+        setVehicles(vehiclesData);
+      } catch (error) {
+        console.error('Error fetching bookings:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const userBookings = bookings.filter(b => {
     if (filter === 'all') return true;
@@ -57,7 +79,11 @@ export default function MyBookings() {
 
       {/* Bookings list */}
       <div className="space-y-4">
-        {userBookings.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1B83A1]"></div>
+          </div>
+        ) : userBookings.length === 0 ? (
           <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
             <Car className="mx-auto mb-4 text-gray-400" size={48} />
             <p className="text-gray-500">Chưa có đơn đặt xe nào</p>

@@ -4,7 +4,7 @@ import { Search, MapPin, Calendar, Car, Shield, Clock, Star, ArrowRight, Zap, Tr
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import Tilt from 'react-parallax-tilt';
-import { vehicles } from '../../data/mockData';
+import { api } from '../../services/api';
 import FloatingOrbs from '../../components/FloatingOrbs';
 import AnimatedCounter from '../../components/AnimatedCounter';
 import MouseTracker from '../../components/MouseTracker';
@@ -48,6 +48,23 @@ export default function Home() {
       window.removeEventListener('mousemove', handleMouseMove);
       document.documentElement.style.scrollSnapType = '';
     };
+  }, []);
+
+  const [vehicles, setVehicles] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchVehicles = async () => {
+      try {
+        const data = await api.get('/vehicles');
+        setVehicles(data);
+      } catch (error) {
+        console.error('Error fetching vehicles:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchVehicles();
   }, []);
 
 
@@ -199,7 +216,16 @@ export default function Home() {
             viewport={{ once: true }}
             className="grid grid-cols-3 gap-6"
           >
-            {filtered.slice(0, 6).map((v) => (
+            {loading ? (
+              <div className="col-span-3 flex justify-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1B83A1]"></div>
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="col-span-3 text-center py-12 text-gray-500">
+                Không tìm thấy xe phù hợp
+              </div>
+            ) : (
+              filtered.slice(0, 6).map((v) => (
               <Tilt
                 key={v.id}
                 tiltMaxAngleX={5}
@@ -241,7 +267,7 @@ export default function Home() {
                 </div>
               </motion.div>
               </Tilt>
-            ))}
+            )))}
           </motion.div>
         </div>
       </section>

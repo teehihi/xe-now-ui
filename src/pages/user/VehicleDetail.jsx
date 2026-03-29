@@ -1,14 +1,36 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Car, MapPin, Calendar, Shield, Star, Check, ArrowLeft, Fuel, Gauge, Users } from 'lucide-react';
-import { vehicles } from '../../data/mockData';
+import { api } from '../../services/api';
 
 export default function VehicleDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const vehicle = vehicles.find(v => v.id === parseInt(id));
+  const [vehicle, setVehicle] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+
+  useEffect(() => {
+    const fetchVehicle = async () => {
+      try {
+        setLoading(true);
+        const data = await api.get(`/vehicles/${id}`);
+        setVehicle(data);
+      } catch (error) {
+        console.error('Error fetching vehicle details:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchVehicle();
+  }, [id]);
+
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1B83A1]"></div>
+    </div>
+  );
 
   if (!vehicle) return <div className="max-w-6xl mx-auto px-8 py-16 text-center">Không tìm thấy xe</div>;
 

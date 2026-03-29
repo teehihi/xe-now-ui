@@ -20,6 +20,8 @@ import AdminVehicles from './pages/admin/Vehicles';
 import Bookings from './pages/admin/Bookings';
 import Customers from './pages/admin/Customers';
 import Branches from './pages/admin/Branches';
+import Brands from './pages/admin/Brands';
+import Models from './pages/admin/Models';
 import Maintenance from './pages/admin/Maintenance';
 import Reports from './pages/admin/Reports';
 
@@ -51,6 +53,8 @@ function App() {
           <Route path="bookings" element={<Bookings />} />
           <Route path="customers" element={<Customers />} />
           <Route path="branches" element={<Branches />} />
+          <Route path="brands" element={<Brands />} />
+          <Route path="models" element={<Models />} />
           <Route path="maintenance" element={<Maintenance />} />
           <Route path="reports" element={<Reports />} />
         </Route>

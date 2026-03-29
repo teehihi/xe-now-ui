@@ -2,25 +2,78 @@ import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
-import { revenueData, vehicleTypeRevenue, topVehicles } from '../../data/mockData';
+import { useEffect, useState } from 'react';
+import { api } from '../../services/api';
 import { TrendingUp, CalendarCheck, BarChart2, Download } from 'lucide-react';
 
-const summaryCards = [
-  { label: 'Tổng doanh thu', value: '2,3 T ₫', sub: '+12% so với kỳ trước', icon: TrendingUp, bg: 'bg-blue-50 border-blue-200' },
-  { label: 'Tổng booking', value: '440', sub: '+8% so với kỳ trước', icon: CalendarCheck, bg: 'bg-green-50 border-green-200' },
-  { label: 'TB doanh thu/tháng', value: '390 Tr ₫', sub: '6 tháng gần đây', icon: BarChart2, bg: 'bg-purple-50 border-purple-200' },
-  { label: 'TB booking/tháng', value: '73', sub: '6 tháng gần đây', icon: BarChart2, bg: 'bg-orange-50 border-orange-200' },
-];
-
-const typeStats = [
-  { type: 'Sedan', count: 4, revenue: '850 Tr ₫', avg: '213 Tr ₫', color: '#1B83A1' },
-  { type: 'SUV', count: 3, revenue: '1,2 T ₫', avg: '400 Tr ₫', color: '#10B981' },
-  { type: 'MPV', count: 2, revenue: '680 Tr ₫', avg: '340 Tr ₫', color: '#F59E0B' },
-  { type: 'Pickup', count: 1, revenue: '450 Tr ₫', avg: '450 Tr ₫', color: '#EF4444' },
-  { type: 'Luxury', count: 2, revenue: '1,5 T ₫', avg: '750 Tr ₫', color: '#8B5CF6' },
-];
-
 export default function Reports() {
+  const [data, setData] = useState({ bookings: [], vehicles: [] });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [bookings, vehicles] = await Promise.all([
+          api.get('/admin/bookings'),
+          api.get('/admin/vehicles')
+        ]);
+        setData({ bookings, vehicles });
+      } catch (error) {
+        console.error('Error fetching record for reports:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) return (
+    <div className="flex justify-center py-20">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1B83A1]"></div>
+    </div>
+  );
+
+  const totalRevenue = data.bookings.reduce((sum, b) => sum + (b.totalPrice || 0), 0);
+  const totalBookings = data.bookings.length;
+
+  const summaryCards = [
+    { label: 'Tổng doanh thu', value: `${totalRevenue.toLocaleString('vi-VN')} ₫`, sub: 'Tính từ dữ liệu thực tế', icon: TrendingUp, bg: 'bg-blue-50 border-blue-200' },
+    { label: 'Tổng booking', value: totalBookings, sub: 'Tất cả trạng thái', icon: CalendarCheck, bg: 'bg-green-50 border-green-200' },
+    { label: 'Số lượng xe', value: data.vehicles.length, sub: 'Hệ thống hiện tại', icon: BarChart2, bg: 'bg-purple-50 border-purple-200' },
+    { label: 'Doanh thu TB', value: totalBookings > 0 ? `${(totalRevenue / totalBookings).toLocaleString('vi-VN')} ₫` : '0 ₫', sub: 'Mỗi đơn đặt xe', icon: BarChart2, bg: 'bg-orange-50 border-orange-200' },
+  ];
+
+  // Logic to calculate distribution by car type
+  const typeCounts = data.vehicles.reduce((acc, v) => {
+    const type = v.type || 'Khác';
+    acc[type] = (acc[type] || 0) + 1;
+    return acc;
+  }, {});
+  const vehicleTypeRevenue = Object.entries(typeCounts).map(([name, value]) => ({ name, value }));
+  const COLORS = ['#1B83A1', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+
+  const typeStats = Object.entries(typeCounts).map(([type, count]) => {
+    const revenue = data.bookings
+      .filter(b => {
+        const v = data.vehicles.find(veh => veh.vehicleId === b.vehicleId);
+        return v && v.type === type;
+      })
+      .reduce((sum, b) => sum + (b.totalPrice || 0), 0);
+    return {
+      type,
+      count,
+      revenue: `${revenue.toLocaleString('vi-VN')} ₫`,
+      avg: count > 0 ? `${(revenue / count).toLocaleString('vi-VN')} ₫` : '0 ₫',
+      color: COLORS[Object.keys(typeCounts).indexOf(type) % COLORS.length]
+    };
+  });
+
+  // Logic for top vehicles
+  const topVehicles = []; // Calculated if needed
+
+  // Placeholder for revenueData (needs backend historical data for trend)
+  const revenueData = [];
   return (
     <div className="space-y-6">
       {/* Header actions */}
@@ -85,13 +138,13 @@ export default function Reports() {
 
         {/* Pie */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Doanh thu theo loại xe</h3>
+          <h3 className="font-semibold text-gray-900 mb-4">Phân bổ theo loại xe</h3>
           <ResponsiveContainer width="100%" height={240}>
             <PieChart>
-              <Pie data={vehicleTypeRevenue} dataKey="value" cx="50%" cy="50%" outerRadius={90} label={({ name, value }) => `${name}: ${value}%`}>
-                {vehicleTypeRevenue.map(e => <Cell key={e.name} fill={e.color} />)}
+              <Pie data={vehicleTypeRevenue} dataKey="value" cx="50%" cy="50%" outerRadius={90} label={({ name, value }) => `${name}: ${value}`}>
+                {vehicleTypeRevenue.map((e, index) => <Cell key={e.name} fill={COLORS[index % COLORS.length]} />)}
               </Pie>
-              <Tooltip formatter={v => [`${v}%`, 'Tỷ lệ']} />
+              <Tooltip formatter={v => [v, 'Số lượng']} />
             </PieChart>
           </ResponsiveContainer>
         </div>

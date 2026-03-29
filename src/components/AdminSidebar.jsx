@@ -1,12 +1,14 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Car, CalendarCheck, Users, MapPin,
-  Wrench, BarChart2, ArrowLeft
+  Wrench, BarChart2, ArrowLeft, Award, Activity
 } from 'lucide-react';
 
 const navItems = [
   { to: '/admin',           label: 'Dashboard',       icon: LayoutDashboard, end: true },
   { to: '/admin/vehicles',  label: 'Quản lý xe',      icon: Car },
+  { to: '/admin/brands',    label: 'Hãng xe',         icon: Award },
+  { to: '/admin/models',    label: 'Mẫu xe',          icon: Activity },
   { to: '/admin/bookings',  label: 'Quản lý booking', icon: CalendarCheck },
   { to: '/admin/customers', label: 'Khách hàng',      icon: Users },
   { to: '/admin/branches',  label: 'Chi nhánh',       icon: MapPin },

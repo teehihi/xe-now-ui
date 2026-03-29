@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Search, Plus, Pencil, Trash2, X } from 'lucide-react';
-import { customers as initialCustomers } from '../../data/mockData';
+import { api } from '../../services/api';
 
 const statCards = [
   { label: 'Tổng khách hàng', value: 3 },
@@ -11,15 +11,32 @@ const statCards = [
 const emptyForm = { name: '', email: '', phone: '', idCard: '', licenseExpiry: '' };
 
 export default function Customers() {
-  const [customers, setCustomers] = useState(initialCustomers);
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState(null);
 
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
+
+  const fetchCustomers = async () => {
+    try {
+      setLoading(true);
+      const data = await api.get('/admin/customers');
+      setCustomers(data);
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filtered = customers.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
-    c.email.includes(search) || c.phone.includes(search)
+    (c.name || '').toLowerCase().includes(search.toLowerCase()) ||
+    (c.email || '').includes(search) || (c.phone || '').includes(search)
   );
 
   function openAdd() { setForm(emptyForm); setEditId(null); setShowModal(true); }
@@ -42,12 +59,18 @@ export default function Customers() {
 
       {/* Stat cards */}
       <div className="grid grid-cols-3 gap-4">
-        {statCards.map(s => (
-          <div key={s.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <p className="text-sm text-gray-500">{s.label}</p>
-            <p className="text-3xl font-semibold text-gray-900 mt-1">{s.value}</p>
-          </div>
-        ))}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <p className="text-sm text-gray-500">Tổng khách hàng</p>
+          <p className="text-3xl font-semibold text-gray-900 mt-1">{customers.length}</p>
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <p className="text-sm text-gray-500">Mới tháng này</p>
+          <p className="text-3xl font-semibold text-gray-900 mt-1">0</p>
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <p className="text-sm text-gray-500">Hoạt động</p>
+          <p className="text-3xl font-semibold text-gray-900 mt-1">{filtered.length}</p>
+        </div>
       </div>
 
       {/* Search */}
@@ -76,17 +99,17 @@ export default function Customers() {
           </thead>
           <tbody>
             {filtered.map((c, i) => (
-              <tr key={c.id} className={`border-b border-gray-50 hover:bg-gray-50 ${i === filtered.length - 1 ? 'border-0' : ''}`}>
-                <td className="px-4 py-3 font-mono text-gray-700">#{c.id}</td>
-                <td className="px-4 py-3 font-medium text-gray-900">{c.name}</td>
+              <tr key={c.customerId || c.userId} className={`border-b border-gray-50 hover:bg-gray-50 ${i === filtered.length - 1 ? 'border-0' : ''}`}>
+                <td className="px-4 py-3 font-mono text-gray-700">#{c.customerId}</td>
+                <td className="px-4 py-3 font-medium text-gray-900">{c.name || c.fullName}</td>
                 <td className="px-4 py-3 text-gray-700">{c.email}</td>
-                <td className="px-4 py-3 font-mono text-gray-700">{c.phone}</td>
-                <td className="px-4 py-3 font-mono text-gray-700">{c.idCard}</td>
-                <td className="px-4 py-3 text-gray-700">{c.licenseExpiry}</td>
+                <td className="px-4 py-3 font-mono text-gray-700">{c.phone || 'N/A'}</td>
+                <td className="px-4 py-3 font-mono text-gray-700">{c.identityCard || 'N/A'}</td>
+                <td className="px-4 py-3 text-gray-700">{c.driverLicenseExpiry || 'N/A'}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-2">
                     <button onClick={() => openEdit(c)} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600"><Pencil size={15} /></button>
-                    <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600"><Trash2 size={15} /></button>
+                    <button onClick={() => handleDelete(c.customerId || c.userId)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600"><Trash2 size={15} /></button>
                   </div>
                 </td>
               </tr>
