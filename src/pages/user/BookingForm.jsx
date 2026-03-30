@@ -7,6 +7,12 @@ export default function BookingForm() {
   const navigate = useNavigate();
   const { vehicle, startDate, endDate, days, totalPrice } = location.state || {};
 
+  const getImageUrl = (url) => {
+    if (!url) return '/images/car-toyota-camry.webp';
+    if (url.startsWith('http')) return url;
+    return `http://localhost:8080${url}`;
+  };
+
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -149,7 +155,7 @@ export default function BookingForm() {
             <h3 className="font-semibold text-gray-900 mb-4">Thông tin đặt xe</h3>
             
             <div className="mb-4 pb-4 border-b">
-              <img src={vehicle.image} alt={vehicle.name} className="w-full h-32 object-cover rounded-lg mb-3"
+              <img src={getImageUrl(vehicle.image)} alt={vehicle.name} className="w-full h-32 object-cover rounded-lg mb-3"
               onError={e => { e.target.style.display = 'none'; }} />
               <h4 className="font-semibold text-gray-900">{vehicle.name}</h4>
               <p className="text-sm text-gray-500">{vehicle.brand} • {vehicle.type}</p>

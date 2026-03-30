@@ -142,6 +142,13 @@ const Vehicles = () => {
     });
   };
 
+  // Helper to get full image URL
+  const getImageUrl = (url) => {
+    if (!url) return '/images/car-toyota-camry.webp';
+    if (url.startsWith('http')) return url;
+    return `http://localhost:8080${url}`;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pt-24 pb-16">
       <div className="max-w-[1400px] mx-auto px-6">
@@ -388,7 +395,7 @@ const Vehicles = () => {
                   {/* Image */}
                   <div className="relative h-48 overflow-hidden">
                     <img
-                      src={vehicle.image}
+                      src={getImageUrl(vehicle.image)}
                       alt={vehicle.name}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />

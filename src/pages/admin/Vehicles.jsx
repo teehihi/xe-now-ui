@@ -5,9 +5,9 @@ import StatusBadge from '../../components/StatusBadge';
 
 const statusOptions = ['Tất cả trạng thái', 'Available', 'Rented', 'Maintenance'];
 const statusLabel = { Available: 'Sẵn sàng', Rented: 'Đã thuê', Maintenance: 'Bảo trì' };
-const vehicleTypes = ['xe ô tô', 'xe tay ga', 'xe số'];
+const vehicleTypes = ['Xe Ô Tô', 'Xe Tay Ga', 'Xe Số'];
 
-const emptyForm = { licensePlate: '', modelId: '', type: 'xe ô tô', locationId: '', pricePerDay: '', seats: '', mileage: '', manufactureYear: 2023 };
+const emptyForm = { licensePlate: '', modelId: '', type: 'Xe Ô Tô', locationId: '', pricePerDay: '', seats: '', mileage: '', manufactureYear: 2023 };
 
 export default function Vehicles() {
   const [vehicles, setVehicles] = useState([]);
@@ -18,6 +18,7 @@ export default function Vehicles() {
   const [statusFilter, setStatusFilter] = useState('Tất cả trạng thái');
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [imageKey, setImageKey] = useState(0);
   const [editId, setEditId] = useState(null);
   const [toast, setToast] = useState('');
 
@@ -62,7 +63,8 @@ export default function Vehicles() {
       pricePerDay: String(v.pricePerDay || v.dailyRate || ''),
       type: v.type,
       locationId: v.locationId,
-      modelId: v.modelId
+      modelId: v.modelId,
+      images: v.images || []
     }); 
     setEditId(v.vehicleId || v.id); 
     setShowModal(true); 
@@ -123,12 +125,20 @@ export default function Vehicles() {
     try {
         await api.post(`/admin/vehicles/${editId}/images`, formData);
         showToast('Tải ảnh lên thành công');
+        
         // Refresh vehicle data to show new images
-        const updatedVehicle = await api.get(`/admin/vehicles`);
-        setVehicles(updatedVehicle);
-        const current = updatedVehicle.find(v => (v.vehicleId || v.id) === editId);
-        if (current) setForm(prev => ({ ...prev, images: current.images }));
+        await fetchData();
+        
+        // Update form with new images
+        const updatedVehicles = await api.get(`/admin/vehicles`);
+        const current = updatedVehicles.find(v => (v.vehicleId || v.id) === editId);
+        
+        if (current && current.images) {
+          setForm(prev => ({ ...prev, images: [...current.images] }));
+          setImageKey(prev => prev + 1);
+        }
     } catch (error) {
+        console.error('Upload error:', error);
         showToast('Lỗi khi tải ảnh');
     }
   }
@@ -375,7 +385,7 @@ export default function Vehicles() {
 
                 {/* Thumbnails */}
                 {form.images && form.images.length > 0 && (
-                  <div className="flex flex-wrap gap-4">
+                  <div key={imageKey} className="flex flex-wrap gap-4">
                     {form.images.map(img => (
                       <div key={img.imageId} className="group relative w-32 aspect-square rounded-2xl overflow-hidden border border-gray-100 bg-gray-50">
                         <img src={getImgUrl(img.imageUrl)} alt="" className="w-full h-full object-cover" />

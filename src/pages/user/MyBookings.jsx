@@ -8,6 +8,12 @@ export default function MyBookings() {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const getImageUrl = (url) => {
+    if (!url) return '/images/car-toyota-camry.webp';
+    if (url.startsWith('http')) return url;
+    return `http://localhost:8080${url}`;
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -98,7 +104,7 @@ export default function MyBookings() {
                 <div className="flex gap-6">
                   {/* Vehicle image */}
                   <div className="w-48 h-32 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
-                    <img src={vehicle.image} alt={vehicle.name} className="w-full h-full object-cover"
+                    <img src={getImageUrl(vehicle.image)} alt={vehicle.name} className="w-full h-full object-cover"
                     onError={e => { e.target.style.display = 'none'; }} />
                   </div>
 

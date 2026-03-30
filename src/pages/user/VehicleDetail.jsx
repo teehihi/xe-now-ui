@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Car, MapPin, Calendar, Shield, Star, Check, ArrowLeft, Fuel, Gauge, Users } from 'lucide-react';
 import { api } from '../../services/api';
@@ -10,6 +10,12 @@ export default function VehicleDetail() {
   const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+
+  const getImageUrl = (url) => {
+    if (!url) return '/images/car-toyota-camry.webp';
+    if (url.startsWith('http')) return url;
+    return `http://localhost:8080${url}`;
+  };
 
   useEffect(() => {
     const fetchVehicle = async () => {
@@ -64,7 +70,7 @@ export default function VehicleDetail() {
         <div className="col-span-2">
           <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
             <div className="relative h-96 bg-gray-100">
-              <img src={vehicle.image} alt={vehicle.name} className="w-full h-full object-cover" />
+              <img src={getImageUrl(vehicle.image)} alt={vehicle.name} className="w-full h-full object-cover" />
               <div className="absolute top-4 right-4">
                 <span className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
                   vehicle.status === 'available' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-gray-100 text-gray-700'

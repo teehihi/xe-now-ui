@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 
 const navItems = [
-  { to: '/admin',           label: 'Dashboard',       icon: LayoutDashboard, end: true },
+  { to: '/admin/dashboard', label: 'Dashboard',       icon: LayoutDashboard },
   { to: '/admin/vehicles',  label: 'Quản lý xe',      icon: Car },
   { to: '/admin/brands',    label: 'Hãng xe',         icon: Award },
   { to: '/admin/models',    label: 'Mẫu xe',          icon: Activity },
@@ -21,23 +21,18 @@ export default function AdminSidebar() {
   return (
     <aside className="w-72 min-h-screen bg-[#1E293B] flex flex-col flex-shrink-0">
       {/* Logo */}
-      <div className="h-[93px] flex items-center px-6 border-b border-[#617699]">
-        <img src="/images/logo.webp" alt="XeNow" className="h-8 brightness-0 invert mr-2" onError={(e) => {
+      <div className="h-[93px] flex items-center justify-center px-6 border-b border-[#617699] gap-3">
+        <img src="/images/logo.webp" alt="XeNow" className="h-24 brightness-0 invert" onError={(e) => {
           e.target.style.display = 'none';
         }} />
-        <span className="text-white text-2xl font-bold tracking-wide">
-          <span className="text-[#1B83A1]">Xe</span>Now
-        </span>
-        <span className="ml-2 text-[#617699] text-xs">Admin</span>
       </div>
 
       {/* Nav */}
       <nav className="flex-1 px-4 py-4 space-y-1">
-        {navItems.map(({ to, label, icon: Icon, end }) => (
+        {navItems.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
-            end={end}
             className={({ isActive }) =>
               `flex items-center gap-3 px-4 py-2.5 rounded-[10px] text-sm font-medium transition-colors ${
                 isActive
