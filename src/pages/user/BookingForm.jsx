@@ -37,7 +37,6 @@ export default function BookingForm() {
     e.preventDefault();
     // TODO: Implement actual booking logic
     console.log('Booking:', { ...formData, vehicle, startDate, endDate, totalPrice });
-    alert('Đặt xe thành công! Chúng tôi sẽ liên hệ với bạn sớm.');
     navigate('/my-bookings');
   };
 

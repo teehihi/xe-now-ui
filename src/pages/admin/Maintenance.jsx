@@ -34,7 +34,7 @@ export default function Maintenance() {
       await api.post(`/admin/vehicles/${id}/maintenance/complete`);
       fetchVehicles();
     } catch (error) {
-      alert('Lỗi: ' + error.message);
+      showToast('Lỗi: ' + error.message);
     }
   };
 

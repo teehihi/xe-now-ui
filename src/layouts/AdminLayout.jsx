@@ -21,7 +21,7 @@ export default function AdminLayout() {
       <AdminSidebar />
       <div className="flex-1 flex flex-col min-w-0 h-full">
         <AdminHeader title={meta.title} subtitle={meta.subtitle} />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto p-8">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto scrollbar-hide p-8">
           <Outlet />
         </main>
       </div>

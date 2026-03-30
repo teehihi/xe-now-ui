@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-
 import { api } from '../../services/api';
+import Toast from '../../components/Toast';
 
 const inp = 'w-full px-4 py-2.5 rounded-full bg-[#F3F3F5] border border-[#CAD5E2] outline-none focus:border-[#2563EB] text-sm text-[#64748B] placeholder:text-[#64748B]';
 
@@ -12,10 +12,11 @@ export default function Login() {
   const { login } = useAuth();
   const [showPw, setShowPw] = useState(false);
   const [form, setForm] = useState({ email: '', password: '', remember: false });
+  const [toast, setToast] = useState({ message: '', type: 'error' });
+  const showToast = (message, type = 'error') => setToast({ message, type });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       const result = await api.post('/auth/login', {
         username: form.email,
@@ -23,27 +24,25 @@ export default function Login() {
       });
 
       if (result.success && result.data?.authenticated) {
-        // Save user and token
         login(result.data.user, result.data.token);
-
-        // Chuyển hướng dựa trên Role
         if (result.data.user.role === 'ADMIN') {
           navigate('/admin');
         } else {
           navigate('/');
         }
       } else {
-        alert(result.message || 'Đăng nhập thất bại');
+        showToast(result.message || 'Đăng nhập thất bại');
       }
     } catch (error) {
       console.error('Login error:', error);
-      alert('Lỗi kết nối đến server');
+      showToast('Lỗi kết nối đến server');
     }
   };
 
   return (
     <div className="h-screen flex items-center justify-center overflow-hidden"
       style={{ background: 'linear-gradient(135deg,rgba(239,246,255,0.8) 0%,#F8FAFC 50%,rgba(255,247,237,0.5) 100%)' }}>
+      <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: '' })} />
 
       <div className="w-full flex flex-col items-center gap-6" style={{ maxWidth: 420 }}>
 

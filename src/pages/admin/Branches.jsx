@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { MapPin, Phone, Plus, Pencil, Trash2, X, RefreshCcw, Building2 } from 'lucide-react';
 import { api } from '../../services/api';
 import Pagination from '../../components/Pagination';
+import AddressPicker from '../../components/AddressPicker';
 
-const emptyForm = { branchName: '', address: '', city: '', phone: '' };
+const emptyForm = { branchName: '', address: '', city: '', phone: '', street: '' };
 
 export default function Branches() {
   const [locations, setLocations] = useState([]);
@@ -36,11 +37,15 @@ export default function Branches() {
 
   function openAdd() { setForm(emptyForm); setEditId(null); setShowModal(true); }
   function openEdit(l) {
+    const parts = (l.address || '').split(',');
+    const street = parts[0]?.trim() || '';
     setForm({
       branchName: l.branchName,
       address: l.address,
       city: l.city,
-      phone: l.phone
+      phone: l.phone,
+      street,
+      initialAddress: l.address,
     });
     setEditId(l.locationId);
     setShowModal(true);
@@ -57,7 +62,7 @@ export default function Branches() {
       setShowModal(false);
       fetchLocations();
     } catch (error) {
-      alert('Lỗi khi lưu chi nhánh: ' + (error.response?.data?.message || error.message));
+      setToast('Lỗi khi lưu chi nhánh: ' + (error.response?.data?.message || error.message));
     } finally {
       setSaving(false);
     }
@@ -69,7 +74,7 @@ export default function Branches() {
       await api.delete(`/admin/locations/${id}`);
       fetchLocations();
     } catch (error) {
-      alert('Lỗi khi xóa: ' + (error.response?.data?.message || error.message));
+      setToast('Lỗi khi xóa: ' + (error.response?.data?.message || error.message));
     }
   }
 
@@ -121,7 +126,9 @@ export default function Branches() {
                     <div className="mt-8 space-y-4 relative z-10">
                       <div className="flex items-center gap-3 bg-gray-50 p-4 rounded-2xl border border-gray-100">
                         <MapPin size={18} className="text-[#1B83A1]" />
-                        <span className="text-sm font-medium text-gray-600">{l.address}</span>
+                        <span className="text-sm font-medium text-gray-600">
+                          {(l.address || '').split(',').slice(0, -1).join(',').trim()}
+                        </span>
                       </div>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 text-sm font-bold text-gray-400">
@@ -151,31 +158,42 @@ export default function Branches() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-6 animate-in fade-in duration-200">
-          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="px-10 pt-10 pb-6 flex items-center justify-between">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
+            <div className="px-8 pt-8 pb-4 flex items-center justify-between shrink-0">
               <div>
-                <h2 className="text-2xl font-black text-gray-900">{editId ? 'Sửa thông tin' : 'Chi nhánh mới'}</h2>
-                <p className="text-sm text-gray-400 font-medium">Cập nhật hệ thống phủ sóng của XeNow</p>
+                <h2 className="text-xl font-black text-gray-900">{editId ? 'Sửa thông tin' : 'Chi nhánh mới'}</h2>
+                <p className="text-xs text-gray-400 font-medium mt-0.5">Cập nhật hệ thống phủ sóng của XeNow</p>
               </div>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors"><X size={24} /></button>
+              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors"><X size={22} /></button>
             </div>
 
-            <div className="p-10 pt-0 space-y-6">
-              {[
-                { label: 'Tên chi nhánh', key: 'branchName', placeholder: 'Ví dụ: XeNow Hoàn Kiếm' },
-                { label: 'Địa chỉ', key: 'address', placeholder: 'Số 123, đường...' },
-                { label: 'Thành phố', key: 'city', placeholder: 'Hà Nội, TP.HCM...' },
-                { label: 'Số điện thoại', key: 'phone', placeholder: '09xxxxxxxxx' },
-              ].map((f) => (
-                <div key={f.key}>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">{f.label}</label>
-                  <input
-                    placeholder={f.placeholder}
-                    value={form[f.key] ?? ''}
-                    onChange={e => setForm(f_state => ({ ...f_state, [f.key]: e.target.value }))}
-                    className="w-full px-6 py-4 bg-gray-50 border border-transparent rounded-2xl text-sm font-bold outline-none focus:bg-white focus:border-[#1B83A1] transition-all" />
-                </div>
-              ))}
+            <div className="px-8 pb-8 space-y-4 overflow-y-auto flex-1 scrollbar-hide">
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Tên chi nhánh</label>
+                <input
+                  placeholder="Ví dụ: XeNow Hoàn Kiếm"
+                  value={form.branchName ?? ''}
+                  onChange={e => setForm(f => ({ ...f, branchName: e.target.value }))}
+                  className="w-full px-5 py-3 bg-gray-50 border border-transparent rounded-2xl text-sm font-bold outline-none focus:bg-white focus:border-[#1B83A1] transition-all"
+                />
+              </div>
+
+              <AddressPicker
+                streetAddress={form.street || ''}
+                onStreetChange={v => setForm(f => ({ ...f, street: v }))}
+                onAddressChange={({ address, city }) => setForm(f => ({ ...f, address, city }))}
+                initialAddress={form.initialAddress || ''}
+              />
+
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Số điện thoại</label>
+                <input
+                  placeholder="09xxxxxxxxx"
+                  value={form.phone ?? ''}
+                  onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+                  className="w-full px-5 py-3 bg-gray-50 border border-transparent rounded-2xl text-sm font-bold outline-none focus:bg-white focus:border-[#1B83A1] transition-all"
+                />
+              </div>
 
               <div className="pt-6 flex gap-4">
                 <button onClick={() => setShowModal(false)} className="flex-1 px-6 py-4 rounded-2xl border-2 border-gray-100 text-sm font-black text-gray-400 hover:bg-gray-50 transition-all">HỦY</button>

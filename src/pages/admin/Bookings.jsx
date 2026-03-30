@@ -85,7 +85,7 @@ export default function Bookings() {
       setShowReturnModal(false);
       fetchBookings();
     } catch (error) {
-      alert('Cập nhật thất bại: ' + error.message);
+      showToast('Cập nhật thất bại: ' + error.message);
     }
   }
 

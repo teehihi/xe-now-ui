@@ -2,12 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Car, MapPin, Calendar, Shield, Star, Check, ArrowLeft, Fuel, Gauge, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import { api } from '../../services/api';
+import Toast from '../../components/Toast';
 
 export default function VehicleDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [vehicle, setVehicle] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState({ message: '', type: 'warning' });
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [currentImg, setCurrentImg] = useState(0);
@@ -77,14 +79,14 @@ export default function VehicleDetail() {
 
   const handleBooking = () => {
     if (!startDate || !endDate) {
-      alert('Vui lòng chọn ngày nhận và trả xe');
+      setToast({ message: 'Vui lòng chọn ngày nhận và trả xe', type: 'warning' });
       return;
     }
     navigate('/booking', { state: { vehicle, startDate, endDate, days, totalPrice } });
   };
-
   return (
     <div className="max-w-6xl mx-auto px-8 py-8">
+      <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: '' })} />
       <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6">
         <ArrowLeft size={20} /> Quay lại
       </button>
