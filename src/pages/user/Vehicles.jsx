@@ -17,6 +17,20 @@ const Vehicles = () => {
   const [totalElements, setTotalElements] = useState(0);
   const pageSize = 6;
 
+  // Filter states
+  const [filters, setFilters] = useState({
+    type: [],
+    brand: [],
+    model: [],
+    seats: [],
+    transmission: [],
+    location: [],
+    priceRange: [0, 5000000],
+    yearRange: [2020, 2024]
+  });
+
+  const [showFilters, setShowFilters] = useState(true);
+
   // Scroll to top on mount or page change
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -27,22 +41,25 @@ const Vehicles = () => {
     const fetchVehicles = async () => {
       try {
         setLoading(true);
-        // Add page and size params
-        const response = await api.get(`/vehicles?page=${currentPage}&size=${pageSize}`);
+        const params = new URLSearchParams();
+        params.append('page', currentPage);
+        params.append('size', pageSize);
+        if (filters.type.length === 1) params.append('type', filters.type[0]);
+        if (filters.brand.length > 0) params.append('brand', filters.brand.join(','));
+        if (filters.seats.length > 0) params.append('seats', filters.seats.join(','));
+        if (filters.location.length > 0) params.append('location', filters.location.join(','));
+        if (filters.transmission.length > 0) params.append('transmission', filters.transmission.join(','));
 
-        // Response data is now a Page object
-        const pageData = response.data;
-
-        // Transform data to match frontend format
-        const transformedData = pageData.content.map(vehicle => ({
+        const response = await api.get(`/vehicles?${params.toString()}`);
+        const pageData = response.data?.data || response.data;
+        const transformedData = (pageData.content || []).map(vehicle => ({
           ...vehicle,
           pricePerDay: Number(vehicle.pricePerDay),
-          status: vehicle.status.toLowerCase()
+          status: vehicle.status.toLowerCase(),
         }));
-
         setVehicles(transformedData);
-        setTotalPages(pageData.totalPages);
-        setTotalElements(pageData.totalElements);
+        setTotalPages(pageData.totalPages || 1);
+        setTotalElements(pageData.totalElements || 0);
       } catch (err) {
         console.error('Error fetching vehicles:', err);
         setError(err.message);
@@ -50,50 +67,33 @@ const Vehicles = () => {
         setLoading(false);
       }
     };
-
     fetchVehicles();
-  }, [currentPage]);
+  }, [currentPage, filters.type, filters.brand, filters.seats, filters.location, filters.transmission]);
 
+  // Fetch all vehicles once for filter options
+  const [allVehicles, setAllVehicles] = useState([]);
+  useEffect(() => {
+    api.get('/vehicles?page=0&size=1000').then(res => {
+      const data = res.data?.data || res.data;
+      setAllVehicles(data.content || []);
+    }).catch(() => {});
+  }, []);
 
-  // Filter states
-  const [filters, setFilters] = useState({
-    category: 'all', // all, car, motorcycle
-    type: [],
-    brand: [],
-    model: [], // NEW: filter by model
-    seats: [],
-    transmission: [],
-    location: [],
-    priceRange: [0, 5000000],
-    yearRange: [2020, 2024]
-  });
-
-  const [showFilters, setShowFilters] = useState(true);
-
-  // Extract unique values for filters based on category
+  // Extract unique values for filters
   const filterOptions = useMemo(() => {
-    // Filter vehicles by category first
-    const categoryVehicles = filters.category === 'all'
-      ? vehicles
-      : vehicles.filter(v => v.category === filters.category);
-
-    const types = [...new Set(categoryVehicles.map(v => v.type))].filter(Boolean);
-    const brands = [...new Set(categoryVehicles.map(v => v.brand))].filter(Boolean);
-    const models = [...new Set(categoryVehicles.map(v => v.model))].filter(Boolean).sort();
-    const seats = [...new Set(categoryVehicles.map(v => v.seats))].filter(Boolean).sort((a, b) => a - b);
-    const transmissions = [...new Set(categoryVehicles.map(v => v.transmission))].filter(Boolean);
-    const locations = [...new Set(categoryVehicles.map(v => v.location))].filter(Boolean);
-
+    const types = ['Xe Ô Tô', 'Xe Tay Ga', 'Xe Số'];
+    const source = allVehicles.length > 0 ? allVehicles : vehicles;
+    const brands = [...new Set(source.map(v => v.brand))].filter(Boolean);
+    const models = [...new Set(source.map(v => v.model))].filter(Boolean).sort();
+    const seats = [...new Set(source.map(v => v.seats))].filter(Boolean).sort((a, b) => a - b);
+    const transmissions = [...new Set(source.map(v => v.transmission))].filter(Boolean);
+    const locations = [...new Set(source.map(v => v.location))].filter(Boolean);
     return { types, brands, models, seats, transmissions, locations };
-  }, [filters.category, vehicles]);
+  }, [allVehicles, vehicles]);
 
   // Filter vehicles
   const filteredVehicles = useMemo(() => {
     return vehicles.filter(vehicle => {
-      // Category filter
-      if (filters.category !== 'all' && vehicle.category !== filters.category) return false;
-
-      // Type filter
       if (filters.type.length > 0 && !filters.type.includes(vehicle.type)) return false;
 
       // Brand filter
@@ -130,21 +130,8 @@ const Vehicles = () => {
     }));
   };
 
-  // Handle category change - clear type, brand, model, seats filters when category changes
-  const handleCategoryChange = (category) => {
-    setFilters(prev => ({
-      ...prev,
-      category,
-      type: [],
-      brand: [],
-      model: [],
-      seats: []
-    }));
-  };
-
   const clearFilters = () => {
     setFilters({
-      category: 'all',
       type: [],
       brand: [],
       model: [],
@@ -204,37 +191,29 @@ const Vehicles = () => {
                   </div>
 
                   <div className="space-y-6 overflow-y-auto scrollbar-hide flex-1">
-                    {/* Category */}
-                    <div>
-                      <h3 className="text-gray-900 font-medium mb-3">Danh mục</h3>
-                      <div className="space-y-2">
-                        {['all', 'car', 'motorcycle'].map(cat => (
-                          <label key={cat} className="flex items-center gap-2 cursor-pointer group">
-                            <input
-                              type="radio"
-                              name="category"
-                              checked={filters.category === cat}
-                              onChange={() => handleCategoryChange(cat)}
-                              className="w-4 h-4 accent-[#1B83A1]"
-                            />
-                            <span className="text-gray-600 group-hover:text-gray-900">
-                              {cat === 'all' ? 'Tất cả' : cat === 'car' ? 'Ô tô' : 'Xe máy'}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Type */}
+                    {/* Loại xe (Vehicle Types) */}
                     <div>
                       <h3 className="text-gray-900 font-medium mb-3">Loại xe</h3>
                       <div className="space-y-2">
+                        <label className="flex items-center gap-2 cursor-pointer group">
+                          <input
+                            type="radio"
+                            name="vehicleType"
+                            checked={filters.type.length === 0}
+                            onChange={() => { setCurrentPage(0); setFilters(prev => ({ ...prev, type: [] })); }}
+                            className="w-4 h-4 accent-[#1B83A1]"
+                          />
+                          <span className="text-gray-600 group-hover:text-gray-900">
+                            Tất cả
+                          </span>
+                        </label>
                         {filterOptions.types.map(type => (
                           <label key={type} className="flex items-center gap-2 cursor-pointer group">
                             <input
-                              type="checkbox"
-                              checked={filters.type.includes(type)}
-                              onChange={() => toggleFilter('type', type)}
+                              type="radio"
+                              name="vehicleType"
+                              checked={filters.type.length === 1 && filters.type[0] === type}
+                              onChange={() => { setCurrentPage(0); setFilters(prev => ({ ...prev, type: [type] })); }}
                               className="w-4 h-4 accent-[#1B83A1]"
                             />
                             <span className="text-gray-600 group-hover:text-gray-900">{type}</span>
@@ -497,11 +476,12 @@ const Vehicles = () => {
                 currentPage={currentPage}
                 totalPages={totalPages}
                 onPageChange={(page) => setCurrentPage(page)}
+                className="mt-8"
               />
 
 
               {/* No Results */}
-              {filteredVehicles.length === 0 && (
+              {!loading && vehicles.length === 0 && (
                 <div className="text-center py-16">
                   <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />

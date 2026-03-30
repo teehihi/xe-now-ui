@@ -9,7 +9,7 @@ import {
   PaginationPrevious,
 } from "./ui/pagination"
 
-const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+const Pagination = ({ currentPage, totalPages, onPageChange, className = '' }) => {
   const effectiveTotalPages = Math.max(1, totalPages);
 
   const getPageNumbers = () => {
@@ -30,7 +30,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
   };
 
   return (
-    <div className="w-full">
+    <div className={`w-full ${className}`}>
       <ShadcnPagination>
         <PaginationContent>
           <PaginationItem>
@@ -53,7 +53,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
                    e.preventDefault();
                    onPageChange(page);
                 }}
-                className={currentPage === page ? "bg-gray-900 border-gray-900 text-white hover:bg-gray-800 hover:text-white" : "border-gray-200 text-gray-700 hover:bg-gray-100"}
+                className={`mx-1 ${currentPage === page ? "bg-gray-900 border-gray-900 text-white hover:bg-gray-800 hover:text-white" : "border-gray-200 text-gray-700 hover:bg-gray-100"}`}
               >
                 {page + 1}
               </PaginationLink>

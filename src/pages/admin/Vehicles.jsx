@@ -164,15 +164,17 @@ export default function Vehicles() {
     files.forEach(f => formData.append('files', f));
 
     try {
-      await api.post(`/admin/vehicles/${editId}/images`, formData);
+      const uploadRes = await api.post(`/admin/vehicles/${editId}/images`, formData);
       showToast('Tải ảnh lên thành công');
-      await fetchData();
-      
+
+      // Get updated images from upload response or fetch vehicle
       const res = await api.get(`/admin/vehicles/${editId}`);
-      const data = res.data || res;
-      if (data && data.images) {
-        setForm(prev => ({ ...prev, images: data.images }));
+      const vehicle = res.data?.data || res.data;
+      if (vehicle?.images) {
+        setForm(prev => ({ ...prev, images: vehicle.images }));
+        setImageKey(prev => prev + 1);
       }
+      fetchData();
     } catch (error) {
       showToast('Lỗi khi tải ảnh');
     }
