@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Calendar, Car, MapPin, Clock, CreditCard, FileText } from 'lucide-react';
 import { api } from '../../services/api';
+import Pagination from '../../components/Pagination';
 
 export default function MyBookings() {
   const [filter, setFilter] = useState('all');
@@ -8,30 +9,46 @@ export default function MyBookings() {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const pageSize = 5;
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      // Note: we fetch all vehicles for now to match them with bookings by ID
+      // If vehicles list becomes too large, this should be optimized
+      const [bookingsResponse, vehiclesResponse] = await Promise.all([
+        api.get(`/bookings/my-bookings?page=${currentPage}&size=${pageSize}`),
+        api.get('/vehicles?size=100') // Fetch a larger set to ensure matches
+      ]);
+      
+      const pageData = bookingsResponse.data;
+      setBookings(pageData.content);
+      setTotalPages(pageData.totalPages);
+      setTotalElements(pageData.totalElements);
+
+      // Handle both cases: paginated or list response for vehicles
+      const vData = vehiclesResponse.data?.content || vehiclesResponse;
+      setVehicles(vData);
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
   const getImageUrl = (url) => {
     if (!url) return '/images/car-toyota-camry.webp';
     if (url.startsWith('http')) return url;
     return `http://localhost:8080${url}`;
   };
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const [bookingsData, vehiclesData] = await Promise.all([
-          api.get('/bookings/my-bookings'),
-          api.get('/vehicles')
-        ]);
-        setBookings(bookingsData);
-        setVehicles(vehiclesData);
-      } catch (error) {
-        console.error('Error fetching bookings:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
 
   const userBookings = bookings.filter(b => {
     if (filter === 'all') return true;
@@ -161,6 +178,15 @@ export default function MyBookings() {
           })
         )}
       </div>
+
+      <div className="mt-8">
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={(page) => setCurrentPage(page)}
+        />
+      </div>
     </div>
+
   );
 }

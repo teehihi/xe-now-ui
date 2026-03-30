@@ -1,15 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Search, ChevronDown, Eye, Check, X, Car, Calendar, DollarSign, Phone, Mail, FileText, ClipboardList } from 'lucide-react';
 import { api } from '../../services/api';
 import StatusBadge from '../../components/StatusBadge';
+import Pagination from '../../components/Pagination';
 
 const statusOptions = ['Tất cả trạng thái', 'Pending', 'Confirmed', 'Ongoing', 'Completed', 'Cancelled'];
-const statusLabel = { 
-  Pending: 'Chờ duyệt', 
-  Confirmed: 'Đã xác nhận', 
-  Ongoing: 'Đang thuê', 
-  Completed: 'Hoàn thành', 
-  Cancelled: 'Đã hủy' 
+const statusLabel = {
+  Pending: 'Chờ duyệt',
+  Confirmed: 'Đã xác nhận',
+  Ongoing: 'Đang thuê',
+  Completed: 'Hoàn thành',
+  Cancelled: 'Đã hủy'
 };
 
 const statCards = [
@@ -24,34 +25,49 @@ export default function Bookings() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('Tất cả trạng thái');
-  
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const pageSize = 10;
+
   // Modals state
   const [showReturnModal, setShowReturnModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
-  
+
   // Return form state
   const [mileage, setMileage] = useState('');
   const [note, setNote] = useState('');
 
-  useEffect(() => {
-    fetchBookings();
-  }, []);
+  const [stats, setStats] = useState(null);
 
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await api.get('/admin/bookings');
-      setBookings(data);
+      const [res, sRes] = await Promise.all([
+        api.get(`/admin/bookings?page=${currentPage}&size=${pageSize}`),
+        api.get('/admin/dashboard')
+      ]);
+      setBookings(res.data.content);
+      setTotalPages(res.data.totalPages);
+      setTotalElements(res.data.totalElements);
+      setStats(sRes.data);
     } catch (error) {
       console.error('Error fetching bookings:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage]);
+
+  useEffect(() => {
+    fetchBookings();
+  }, [fetchBookings]);
+
 
   const filtered = bookings.filter(b => {
-    const matchSearch = 
+    const matchSearch =
       String(b.customerName || '').toLowerCase().includes(search.toLowerCase()) ||
       String(b.vehicleModel || '').toLowerCase().includes(search.toLowerCase()) ||
       String(b.bookingId || '').includes(search);
@@ -64,7 +80,7 @@ export default function Bookings() {
       let url = `/admin/bookings/${id}/status?status=${status}`;
       if (extra.mileage) url += `&mileage=${extra.mileage}`;
       if (extra.note) url += `&note=${encodeURIComponent(extra.note)}`;
-      
+
       await api.post(url);
       setShowReturnModal(false);
       fetchBookings();
@@ -77,7 +93,7 @@ export default function Bookings() {
   const formatDate = (dateStr) => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
-    return date.toLocaleString('vi-VN', { 
+    return date.toLocaleString('vi-VN', {
       day: '2-digit', month: '2-digit', year: 'numeric',
       hour: '2-digit', minute: '2-digit'
     });
@@ -90,9 +106,9 @@ export default function Bookings() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col h-[calc(100vh-140px)] space-y-6">
       {/* Stat cards */}
-      <div className="grid grid-cols-4 gap-6">
+      <div className="shrink-0 grid grid-cols-4 gap-6">
         {statCards.map(s => (
           <div key={s.key} className={`rounded-3xl border p-6 transition-all hover:shadow-md ${s.color}`}>
             <p className="text-sm font-medium opacity-80">{s.label}</p>
@@ -104,20 +120,20 @@ export default function Bookings() {
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm px-8 py-5">
+      <div className="shrink-0 bg-white rounded-3xl border border-gray-100 shadow-sm px-8 py-5">
         <div className="flex items-center gap-6">
           <div className="relative flex-1 max-w-xl">
             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input 
-              value={search} 
+            <input
+              value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Tìm theo mã đơn, khách hàng, tên xe..."
-              className="w-full pl-12 pr-6 py-3 bg-gray-50 rounded-2xl text-sm border-0 focus:ring-2 focus:ring-[#1B83A1] transition-all" 
+              className="w-full pl-12 pr-6 py-3 bg-gray-50 rounded-2xl text-sm border-0 focus:ring-2 focus:ring-[#1B83A1] transition-all"
             />
           </div>
           <div className="relative">
-            <select 
-              value={statusFilter} 
+            <select
+              value={statusFilter}
               onChange={e => setStatusFilter(e.target.value)}
               className="appearance-none pl-5 pr-12 py-3 bg-gray-50 rounded-2xl text-sm border-0 focus:ring-2 focus:ring-[#1B83A1] cursor-pointer outline-none"
             >
@@ -130,17 +146,17 @@ export default function Bookings() {
             <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           </div>
           <span className="text-sm text-gray-400 ml-auto font-medium">
-            {filtered.length} đơn đặt xe
+            {totalElements} đơn đặt xe
           </span>
         </div>
       </div>
 
       {/* Main Table */}
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="flex-1 min-h-0 bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden flex flex-col">
+        <div className="flex-1 overflow-auto">
           <table className="w-full">
-            <thead>
-              <tr className="bg-gray-50/50 border-b border-gray-100">
+            <thead className="sticky top-0 bg-white z-10 border-b border-gray-100">
+              <tr className="bg-gray-50/50">
                 <th className="text-left px-8 py-5 text-xs font-bold text-gray-400 uppercase tracking-wider">Mã đơn</th>
                 <th className="text-left px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-wider">Khách hàng</th>
                 <th className="text-left px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-wider">Xe thuê</th>
@@ -180,52 +196,52 @@ export default function Bookings() {
                       {/* Workflow buttons */}
                       {b.status === 'Pending' && (
                         <>
-                          <button 
+                          <button
                             onClick={() => handleUpdateStatus(b.bookingId, 'Confirmed')}
-                            className="p-2.5 rounded-xl bg-green-50 text-green-600 hover:bg-green-100 transition-all" 
+                            className="p-2.5 rounded-xl bg-green-50 text-green-600 hover:bg-green-100 transition-all"
                             title="Xác nhận"
                           >
                             <Check size={18} />
                           </button>
-                          <button 
+                          <button
                             onClick={() => handleUpdateStatus(b.bookingId, 'Cancelled')}
-                            className="p-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition-all" 
+                            className="p-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition-all"
                             title="Hủy đơn"
                           >
                             <X size={18} />
                           </button>
                         </>
                       )}
-                      
+
                       {b.status === 'Confirmed' && (
-                        <button 
+                        <button
                           onClick={() => handleUpdateStatus(b.bookingId, 'Ongoing')}
-                          className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all text-xs font-bold shadow-lg shadow-blue-100" 
+                          className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all text-xs font-bold shadow-lg shadow-blue-100"
                         >
                           Giao xe
                         </button>
                       )}
 
                       {b.status === 'Ongoing' && (
-                        <button 
+                        <button
                           onClick={() => {
                             setSelectedBooking(b);
                             setMileage('');
                             setNote('');
                             setShowReturnModal(true);
                           }}
-                          className="px-4 py-2 rounded-xl bg-[#1B83A1] text-white hover:bg-[#156a82] transition-all text-xs font-bold shadow-lg shadow-cyan-100" 
+                          className="px-4 py-2 rounded-xl bg-[#1B83A1] text-white hover:bg-[#156a82] transition-all text-xs font-bold shadow-lg shadow-cyan-100"
                         >
                           Nhận xe
                         </button>
                       )}
 
-                      <button 
+                      <button
                         onClick={() => {
                           setSelectedBooking(b);
                           setShowDetailModal(true);
                         }}
-                        className="p-2.5 rounded-xl bg-gray-100 text-gray-400 hover:text-[#1B83A1] hover:bg-blue-50 transition-all" 
+                        className="p-2.5 rounded-xl bg-gray-100 text-gray-400 hover:text-[#1B83A1] hover:bg-blue-50 transition-all"
                         title="Chi tiết"
                       >
                         <Eye size={18} />
@@ -243,7 +259,15 @@ export default function Bookings() {
             </div>
           )}
         </div>
+        <div className="px-8 py-4 border-t border-gray-100 bg-gray-50/50">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => setCurrentPage(page)}
+          />
+        </div>
       </div>
+
 
       {/* Return Modal */}
       {showReturnModal && (
@@ -255,7 +279,7 @@ export default function Bookings() {
               </div>
               <h3 className="text-xl font-bold text-gray-900">Xác nhận nhận xe trả</h3>
             </div>
-            
+
             <p className="text-gray-500 text-sm mb-6 leading-relaxed">
               Bạn đang nhận xe <strong>{selectedBooking?.vehicleModel}</strong> trả từ khách hàng <strong>{selectedBooking?.customerName}</strong>. Vui lòng cập nhật số KM hiện tại.
             </p>
@@ -263,18 +287,18 @@ export default function Bookings() {
             <div className="space-y-5">
               <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase mb-2 ml-1">Số KM hiện tại</label>
-                <input 
-                  type="number" 
-                  value={mileage} 
+                <input
+                  type="number"
+                  value={mileage}
                   onChange={e => setMileage(e.target.value)}
                   placeholder="Ví dụ: 12500"
-                  className="w-full px-5 py-3 bg-gray-50 rounded-2xl border-0 focus:ring-2 focus:ring-[#1B83A1] font-bold text-lg transition-all" 
+                  className="w-full px-5 py-3 bg-gray-50 rounded-2xl border-0 focus:ring-2 focus:ring-[#1B83A1] font-bold text-lg transition-all"
                 />
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase mb-2 ml-1">Ghi chú tình trạng</label>
-                <textarea 
-                  value={note} 
+                <textarea
+                  value={note}
                   onChange={e => setNote(e.target.value)}
                   placeholder="Tình trạng xe khi trả: có vết xước, sạch sẽ..."
                   className="w-full px-5 py-4 bg-gray-50 rounded-2xl border-0 focus:ring-2 focus:ring-[#1B83A1] text-sm resize-none h-24 transition-all"
@@ -283,13 +307,13 @@ export default function Bookings() {
             </div>
 
             <div className="flex gap-3 mt-8">
-              <button 
+              <button
                 onClick={() => setShowReturnModal(false)}
                 className="flex-1 py-3 text-sm font-bold text-gray-500 hover:bg-gray-50 rounded-2xl transition-all"
               >
                 Hủy bỏ
               </button>
-              <button 
+              <button
                 onClick={() => handleUpdateStatus(selectedBooking.bookingId, 'Completed', { mileage, note })}
                 className="flex-1 py-3 bg-[#1B83A1] text-white rounded-2xl font-bold text-sm shadow-xl shadow-cyan-100 hover:bg-[#156a82] transition-all"
               >
@@ -305,7 +329,7 @@ export default function Bookings() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in duration-300">
             <div className="bg-[#1B83A1] px-10 py-8 text-white relative">
-              <button 
+              <button
                 onClick={() => setShowDetailModal(false)}
                 className="absolute top-6 right-8 p-2 hover:bg-white/10 rounded-full transition-colors"
               >
@@ -359,7 +383,7 @@ export default function Bookings() {
                     </div>
                   </div>
                 </div>
-                
+
                 {selectedBooking.status === 'Completed' && (
                   <div>
                     <h4 className="flex items-center gap-2 text-xs font-black text-gray-400 uppercase tracking-wider mb-3">
@@ -375,7 +399,7 @@ export default function Bookings() {
             </div>
 
             <div className="px-10 py-6 bg-gray-50 flex justify-end">
-              <button 
+              <button
                 onClick={() => setShowDetailModal(false)}
                 className="px-8 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-bold text-gray-600 hover:bg-gray-100 transition-all"
               >

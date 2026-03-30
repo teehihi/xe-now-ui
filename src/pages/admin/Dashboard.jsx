@@ -28,8 +28,9 @@ export default function Dashboard() {
     const fetchDashboard = async () => {
       try {
         setLoading(true);
-        const data = await api.get('/admin/dashboard');
-        setStats(data);
+        const res = await api.get('/admin/dashboard');
+        // ApiResponse structure: { success, message, data: stats }
+        setStats(res.data);
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);
       } finally {
@@ -90,8 +91,8 @@ export default function Dashboard() {
             <LineChart data={revenueData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
               <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#64748B' }} />
-              <YAxis tick={{ fontSize: 11, fill: '#64748B' }} tickFormatter={v => `${v/1000000}M`} />
-              <Tooltip formatter={v => [`${(v/1000000).toFixed(1)} Tr ₫`, 'Doanh thu']} />
+              <YAxis tick={{ fontSize: 11, fill: '#64748B' }} tickFormatter={v => `${v / 1000000}M`} />
+              <Tooltip formatter={v => [`${(v / 1000000).toFixed(1)} Tr ₫`, 'Doanh thu']} />
               <Line type="monotone" dataKey="revenue" stroke="#1B83A1" strokeWidth={2.5} dot={{ r: 4, fill: '#1B83A1' }} />
             </LineChart>
           </ResponsiveContainer>

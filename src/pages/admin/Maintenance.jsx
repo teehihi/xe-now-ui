@@ -19,8 +19,9 @@ export default function Maintenance() {
   const fetchVehicles = async () => {
     try {
       setLoading(true);
-      const data = await api.get('/admin/vehicles');
-      setVehicles(data);
+      const res = await api.get('/admin/vehicles?size=1000');
+      // ApiResponse structure: { success, message, data: Page }
+      setVehicles(res.data.content);
     } catch (error) {
       console.error('Error fetching vehicles:', error);
     } finally {
@@ -33,7 +34,7 @@ export default function Maintenance() {
       await api.post(`/admin/vehicles/${id}/maintenance/complete`);
       fetchVehicles();
     } catch (error) {
-       alert('Lỗi: ' + error.message);
+      alert('Lỗi: ' + error.message);
     }
   };
 
@@ -90,13 +91,13 @@ export default function Maintenance() {
               <AlertTriangle className="text-orange-500" size={20} />
               <h3 className="font-bold text-gray-800">Danh sách Cảnh báo Phân cấp</h3>
             </div>
-            
+
             <div className="divide-y divide-gray-50">
               {vehiclesDue.length > 0 ? vehiclesDue.map(v => {
                 const gap = v.mileage - (v.lastMaintenanceMileage || 0);
                 const info = getMaintenanceLevel(gap);
                 const percent = Math.min((gap / THRESHOLDS.LEVEL3) * 100, 100);
-                
+
                 return (
                   <div key={v.id} className="p-8 hover:bg-gray-50 transition-colors group">
                     <div className="flex items-start justify-between mb-4">
@@ -118,25 +119,25 @@ export default function Maintenance() {
 
                     <div className="flex items-center gap-4">
                       <div className="flex-1 h-4 bg-gray-100 rounded-full overflow-hidden p-1">
-                        <div 
+                        <div
                           className={`h-full transition-all duration-1000 ${info.color} rounded-full flex items-center justify-end px-2`}
                           style={{ width: `${percent}%` }}
                         >
-                           <span className="text-[8px] text-white font-black">{Math.round(percent)}%</span>
+                          <span className="text-[8px] text-white font-black">{Math.round(percent)}%</span>
                         </div>
                       </div>
-                      <button 
+                      <button
                         onClick={() => handleCompleteMaintenance(v.id)}
                         className="flex items-center gap-2 px-6 py-2.5 bg-gray-900 text-white rounded-xl text-xs font-bold hover:bg-[#1B83A1] hover:shadow-lg transition-all active:scale-95"
                       >
                         <CheckCircle size={14} /> Bảo trì xong
                       </button>
                     </div>
-                    
+
                     <div className="flex justify-between mt-3 text-[10px] font-bold text-gray-400">
-                       <span className={gap >= 5000 ? 'text-yellow-600' : ''}>5,000 KM</span>
-                       <span className={gap >= 7500 ? 'text-orange-600' : ''}>7,500 KM</span>
-                       <span className={gap >= 10000 ? 'text-red-600' : ''}>10,000 KM</span>
+                      <span className={gap >= 5000 ? 'text-yellow-600' : ''}>5,000 KM</span>
+                      <span className={gap >= 7500 ? 'text-orange-600' : ''}>7,500 KM</span>
+                      <span className={gap >= 10000 ? 'text-red-600' : ''}>10,000 KM</span>
                     </div>
                   </div>
                 );
@@ -154,43 +155,43 @@ export default function Maintenance() {
 
         {/* Right: Legend */}
         <div className="space-y-6">
-           <div className="bg-white rounded-[2rem] border border-gray-100 p-8 shadow-sm">
-              <h4 className="font-black text-gray-900 mb-6 flex items-center gap-2">
-                <div className="w-1.5 h-6 bg-[#1B83A1] rounded-full" />
-                Phân cấp bảo trì
-              </h4>
-              <div className="space-y-4">
-                <div className="flex items-start gap-4">
-                  <div className="w-4 h-4 rounded-full bg-yellow-500 mt-1 shadow-sm shadow-yellow-200" />
-                  <div>
-                    <p className="text-xs font-black text-gray-800">CẤP 1 (5,000 KM)</p>
-                    <p className="text-[10px] text-gray-400 font-medium leading-relaxed">Thay dầu máy, lọc dầu, kiểm tra hệ thống phanh cơ bản.</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="w-4 h-4 rounded-full bg-orange-500 mt-1 shadow-sm shadow-orange-200" />
-                  <div>
-                    <p className="text-xs font-black text-gray-800">CẤP 2 (7,500 KM)</p>
-                    <p className="text-[10px] text-gray-400 font-medium leading-relaxed">Vệ sinh lọc gió, đảo lốp, kiểm tra nước làm mát.</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="w-4 h-4 rounded-full bg-red-500 mt-1 shadow-sm shadow-red-200" />
-                  <div>
-                    <p className="text-xs font-black text-gray-800">CẤP 3 (10,000 KM)</p>
-                    <p className="text-[10px] text-gray-400 font-medium leading-relaxed">Bảo trì toàn bộ, thay bugi, kiểm tra hệ thống treo & lái.</p>
-                  </div>
+          <div className="bg-white rounded-[2rem] border border-gray-100 p-8 shadow-sm">
+            <h4 className="font-black text-gray-900 mb-6 flex items-center gap-2">
+              <div className="w-1.5 h-6 bg-[#1B83A1] rounded-full" />
+              Phân cấp bảo trì
+            </h4>
+            <div className="space-y-4">
+              <div className="flex items-start gap-4">
+                <div className="w-4 h-4 rounded-full bg-yellow-500 mt-1 shadow-sm shadow-yellow-200" />
+                <div>
+                  <p className="text-xs font-black text-gray-800">CẤP 1 (5,000 KM)</p>
+                  <p className="text-[10px] text-gray-400 font-medium leading-relaxed">Thay dầu máy, lọc dầu, kiểm tra hệ thống phanh cơ bản.</p>
                 </div>
               </div>
-           </div>
+              <div className="flex items-start gap-4">
+                <div className="w-4 h-4 rounded-full bg-orange-500 mt-1 shadow-sm shadow-orange-200" />
+                <div>
+                  <p className="text-xs font-black text-gray-800">CẤP 2 (7,500 KM)</p>
+                  <p className="text-[10px] text-gray-400 font-medium leading-relaxed">Vệ sinh lọc gió, đảo lốp, kiểm tra nước làm mát.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <div className="w-4 h-4 rounded-full bg-red-500 mt-1 shadow-sm shadow-red-200" />
+                <div>
+                  <p className="text-xs font-black text-gray-800">CẤP 3 (10,000 KM)</p>
+                  <p className="text-[10px] text-gray-400 font-medium leading-relaxed">Bảo trì toàn bộ, thay bugi, kiểm tra hệ thống treo & lái.</p>
+                </div>
+              </div>
+            </div>
+          </div>
 
-           <div className="bg-[#1B83A1] rounded-[2rem] p-8 text-white shadow-xl">
-              <RefreshCcw className="mb-4 opacity-50" size={32} />
-              <h4 className="text-lg font-black mb-2">Tự động hóa</h4>
-              <p className="text-xs text-white/80 leading-relaxed font-medium">
-                Dữ liệu KM được tự động lấy từ lịch sử trả xe của khách hàng. Bạn chỉ việc theo dõi và đưa xe đi bảo dưỡng đúng hạn.
-              </p>
-           </div>
+          <div className="bg-[#1B83A1] rounded-[2rem] p-8 text-white shadow-xl">
+            <RefreshCcw className="mb-4 opacity-50" size={32} />
+            <h4 className="text-lg font-black mb-2">Tự động hóa</h4>
+            <p className="text-xs text-white/80 leading-relaxed font-medium">
+              Dữ liệu KM được tự động lấy từ lịch sử trả xe của khách hàng. Bạn chỉ việc theo dõi và đưa xe đi bảo dưỡng đúng hạn.
+            </p>
+          </div>
         </div>
       </div>
     </div>

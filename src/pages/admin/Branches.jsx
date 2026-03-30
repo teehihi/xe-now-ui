@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { MapPin, Phone, Plus, Pencil, Trash2, X, RefreshCcw, Building2 } from 'lucide-react';
 import { api } from '../../services/api';
+import Pagination from '../../components/Pagination';
 
 const emptyForm = { branchName: '', address: '', city: '', phone: '' };
 
@@ -12,15 +13,20 @@ export default function Branches() {
   const [editId, setEditId] = useState(null);
   const [saving, setSaving] = useState(false);
 
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [pageSize] = useState(4);
+
   useEffect(() => {
     fetchLocations();
-  }, []);
+  }, [currentPage]);
 
   const fetchLocations = async () => {
     try {
       setLoading(true);
-      const data = await api.get('/admin/locations');
-      setLocations(data);
+      const res = await api.get(`/admin/locations?page=${currentPage}&size=${pageSize}`);
+      setLocations(res.data.content);
+      setTotalPages(res.data.totalPages);
     } catch (error) {
       console.error('Error fetching locations:', error);
     } finally {
@@ -29,15 +35,15 @@ export default function Branches() {
   };
 
   function openAdd() { setForm(emptyForm); setEditId(null); setShowModal(true); }
-  function openEdit(l) { 
-    setForm({ 
-      branchName: l.branchName, 
-      address: l.address, 
-      city: l.city, 
-      phone: l.phone 
-    }); 
-    setEditId(l.locationId); 
-    setShowModal(true); 
+  function openEdit(l) {
+    setForm({
+      branchName: l.branchName,
+      address: l.address,
+      city: l.city,
+      phone: l.phone
+    });
+    setEditId(l.locationId);
+    setShowModal(true);
   }
 
   async function handleSave() {
@@ -68,76 +74,78 @@ export default function Branches() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="flex flex-col h-[calc(100vh-140px)] space-y-8 animate-in fade-in duration-500">
       {/* Header */}
-      <div className="flex items-center justify-between">
-         <h2 className="text-2xl font-black text-gray-900">Hệ thống Chi nhánh</h2>
-         <div className="flex gap-2">
-            <button onClick={fetchLocations} className="p-2 text-gray-400 hover:text-[#1B83A1] transition-colors">
-              <RefreshCcw size={20} />
-            </button>
-            <button onClick={openAdd} className="flex items-center gap-2 px-6 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-bold hover:bg-gray-800 transition-all active:scale-95 shadow-lg shadow-gray-200">
-              <Plus size={18} /> Thêm chi nhánh
-            </button>
-         </div>
-      </div>
-
-      {/* Stat cards */}
-      <div className="grid grid-cols-3 gap-6">
-        {[
-          { label: 'Tổng chi nhánh', val: locations.length, color: 'text-[#1B83A1]', bg: 'bg-cyan-50' },
-          { label: 'Các TP hiện diện', val: new Set(locations.map(l => l.city)).size, color: 'text-purple-600', bg: 'bg-purple-50' },
-          { label: 'Tổng phương tiện', val: locations.reduce((s, l) => s + (l.vehicleCount || 0), 0), color: 'text-orange-600', bg: 'bg-orange-50' }
-        ].map(s => (
-          <div key={s.label} className={`${s.bg} rounded-[2rem] p-8 border border-white/50 shadow-sm`}>
-            <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">{s.label}</p>
-            <p className={`text-4xl font-black ${s.color}`}>{s.val}</p>
-          </div>
-        ))}
+      <div className="shrink-0 flex items-center justify-between">
+        <h2 className="text-2xl font-black text-gray-900">Hệ thống Chi nhánh</h2>
+        <div className="flex gap-2">
+          <button onClick={fetchLocations} className="p-2 text-gray-400 hover:text-[#1B83A1] transition-colors">
+            <RefreshCcw size={20} />
+          </button>
+          <button onClick={openAdd} className="flex items-center gap-2 px-6 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-bold hover:bg-gray-800 transition-all active:scale-95 shadow-lg shadow-gray-200">
+            <Plus size={18} /> Thêm chi nhánh
+          </button>
+        </div>
       </div>
 
       {/* Grid List */}
-      <div className="grid grid-cols-2 gap-6">
+      <div className="flex-1 min-h-0 flex flex-col">
         {loading ? (
-          <div className="col-span-2 flex justify-center py-20">
+          <div className="flex-1 flex justify-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1B83A1]"></div>
           </div>
-        ) : locations.map(l => (
-          <div key={l.locationId} className="bg-white rounded-[2rem] border border-gray-100 shadow-xl p-8 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#1B83A1]/5 rounded-bl-[4rem] -mr-10 -mt-10 group-hover:scale-110 transition-transform" />
-            
-            <div className="flex items-start justify-between relative z-10">
-              <div className="flex gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-[#1B83A1] flex items-center justify-center text-white shadow-lg shadow-cyan-100">
-                  <Building2 size={24} />
-                </div>
-                <div>
-                  <h3 className="font-black text-xl text-gray-900 tracking-tight">{l.branchName}</h3>
-                  <p className="text-sm font-bold text-[#1B83A1] uppercase tracking-widest">{l.city}</p>
-                </div>
-              </div>
-              <div className="flex gap-1">
-                <button onClick={() => openEdit(l)} className="p-2.5 rounded-xl hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors"><Pencil size={18} /></button>
-                <button onClick={() => handleDelete(l.locationId)} className="p-2.5 rounded-xl hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors"><Trash2 size={18} /></button>
+        ) : (
+          <>
+            <div className="flex-1 overflow-auto pb-4 px-1">
+              <div className="grid grid-cols-2 gap-6">
+                {locations.map(l => (
+                  <div key={l.locationId} className="bg-white rounded-[2rem] border border-gray-100 shadow-xl p-8 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#1B83A1]/5 rounded-bl-[4rem] -mr-10 -mt-10 group-hover:scale-110 transition-transform" />
+
+                    <div className="flex items-start justify-between relative z-10">
+                      <div className="flex gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-[#1B83A1] flex items-center justify-center text-white shadow-lg shadow-cyan-100">
+                          <Building2 size={24} />
+                        </div>
+                        <div>
+                          <h3 className="font-black text-xl text-gray-900 tracking-tight">{l.branchName}</h3>
+                          <p className="text-sm font-bold text-[#1B83A1] uppercase tracking-widest">{l.city}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-1">
+                        <button onClick={() => openEdit(l)} className="p-2.5 rounded-xl hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors"><Pencil size={18} /></button>
+                        <button onClick={() => handleDelete(l.locationId)} className="p-2.5 rounded-xl hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors"><Trash2 size={18} /></button>
+                      </div>
+                    </div>
+
+                    <div className="mt-8 space-y-4 relative z-10">
+                      <div className="flex items-center gap-3 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                        <MapPin size={18} className="text-[#1B83A1]" />
+                        <span className="text-sm font-medium text-gray-600">{l.address}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-sm font-bold text-gray-400">
+                          <Phone size={14} /> {l.phone}
+                        </div>
+                        <div className="px-4 py-1.5 bg-gray-900 text-white rounded-full text-[10px] font-black uppercase tracking-tighter">
+                          {l.vehicleCount || 0} Phương tiện
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div className="mt-8 space-y-4 relative z-10">
-              <div className="flex items-center gap-3 bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                <MapPin size={18} className="text-[#1B83A1]" />
-                <span className="text-sm font-medium text-gray-600">{l.address}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm font-bold text-gray-400">
-                  <Phone size={14} /> {l.phone}
-                </div>
-                <div className="px-4 py-1.5 bg-gray-900 text-white rounded-full text-[10px] font-black uppercase tracking-tighter">
-                   {l.vehicleCount || 0} Phương tiện
-                </div>
-              </div>
+            <div className="shrink-0 pt-6">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
             </div>
-          </div>
-        ))}
+          </>
+        )}
       </div>
 
       {/* Modal */}
@@ -151,7 +159,7 @@ export default function Branches() {
               </div>
               <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors"><X size={24} /></button>
             </div>
-            
+
             <div className="p-10 pt-0 space-y-6">
               {[
                 { label: 'Tên chi nhánh', key: 'branchName', placeholder: 'Ví dụ: XeNow Hoàn Kiếm' },
@@ -161,19 +169,19 @@ export default function Branches() {
               ].map((f) => (
                 <div key={f.key}>
                   <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">{f.label}</label>
-                  <input 
+                  <input
                     placeholder={f.placeholder}
-                    value={form[f.key] ?? ''} 
+                    value={form[f.key] ?? ''}
                     onChange={e => setForm(f_state => ({ ...f_state, [f.key]: e.target.value }))}
                     className="w-full px-6 py-4 bg-gray-50 border border-transparent rounded-2xl text-sm font-bold outline-none focus:bg-white focus:border-[#1B83A1] transition-all" />
                 </div>
               ))}
-              
+
               <div className="pt-6 flex gap-4">
                 <button onClick={() => setShowModal(false)} className="flex-1 px-6 py-4 rounded-2xl border-2 border-gray-100 text-sm font-black text-gray-400 hover:bg-gray-50 transition-all">HỦY</button>
-                <button 
+                <button
                   disabled={saving}
-                  onClick={handleSave} 
+                  onClick={handleSave}
                   className="flex-[2] px-6 py-4 rounded-2xl bg-gray-900 text-white text-sm font-black hover:bg-[#1B83A1] transition-all shadow-xl shadow-gray-200 disabled:opacity-50"
                 >
                   {saving ? 'ĐANG LƯU...' : (editId ? 'CẬP NHẬT' : 'XÁC NHẬN')}

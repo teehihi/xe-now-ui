@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
+import { api } from '../../services/api';
+
 const inp = 'w-full px-4 py-2.5 rounded-full bg-[#F3F3F5] border border-[#CAD5E2] outline-none focus:border-[#2563EB] text-sm text-[#64748B] placeholder:text-[#64748B]';
 
 export default function Register() {
@@ -30,24 +32,18 @@ export default function Register() {
     }
 
     try {
-      const response = await fetch('http://localhost:8080/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          username: form.email.split('@')[0],
-          password: form.password,
-          fullName: form.fullName,
-          email: form.email
-        })
+      const result = await api.post('/auth/register', {
+        username: form.email.split('@')[0],
+        password: form.password,
+        fullName: form.fullName,
+        email: form.email
       });
 
-      if (response.ok) {
+      if (result.success) {
         alert('Đăng ký thành công! Vui lòng đăng nhập.');
         navigate('/login');
       } else {
-        const error = await response.text();
-        alert('Đăng ký thất bại: ' + error);
+        alert('Đăng ký thất bại: ' + (result.message || 'Lỗi không xác định'));
       }
     } catch (error) {
       console.error('Registration error:', error);

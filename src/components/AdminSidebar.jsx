@@ -5,21 +5,21 @@ import {
 } from 'lucide-react';
 
 const navItems = [
-  { to: '/admin/dashboard', label: 'Dashboard',       icon: LayoutDashboard },
-  { to: '/admin/vehicles',  label: 'Quản lý xe',      icon: Car },
-  { to: '/admin/brands',    label: 'Hãng xe',         icon: Award },
-  { to: '/admin/models',    label: 'Mẫu xe',          icon: Activity },
-  { to: '/admin/bookings',  label: 'Quản lý booking', icon: CalendarCheck },
-  { to: '/admin/customers', label: 'Khách hàng',      icon: Users },
-  { to: '/admin/branches',  label: 'Chi nhánh',       icon: MapPin },
-  { to: '/admin/maintenance',label: 'Bảo trì',        icon: Wrench },
-  { to: '/admin/reports',   label: 'Báo cáo',         icon: BarChart2 },
+  { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/admin/vehicles', label: 'Quản lý xe', icon: Car },
+  { to: '/admin/brands', label: 'Hãng xe', icon: Award },
+  { to: '/admin/models', label: 'Mẫu xe', icon: Activity },
+  { to: '/admin/bookings', label: 'Quản lý booking', icon: CalendarCheck },
+  { to: '/admin/customers', label: 'Khách hàng', icon: Users },
+  { to: '/admin/branches', label: 'Chi nhánh', icon: MapPin },
+  { to: '/admin/maintenance', label: 'Bảo trì', icon: Wrench },
+  { to: '/admin/reports', label: 'Báo cáo', icon: BarChart2 },
 ];
 
 export default function AdminSidebar() {
   const navigate = useNavigate();
   return (
-    <aside className="w-72 min-h-screen bg-[#1E293B] flex flex-col flex-shrink-0">
+    <aside className="w-72 h-screen bg-[#1E293B] flex flex-col shrink-0">
       {/* Logo */}
       <div className="h-[93px] flex items-center justify-center px-6 border-b border-[#617699] gap-3">
         <img src="/images/logo.webp" alt="XeNow" className="h-24 brightness-0 invert" onError={(e) => {
@@ -34,10 +34,9 @@ export default function AdminSidebar() {
             key={to}
             to={to}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-2.5 rounded-[10px] text-sm font-medium transition-colors ${
-                isActive
-                  ? 'bg-[#1B83A1] text-white'
-                  : 'text-[#CAD5E2] hover:bg-white/10'
+              `flex items-center gap-3 px-4 py-2.5 rounded-[10px] text-sm font-medium transition-colors ${isActive
+                ? 'bg-[#1B83A1] text-white'
+                : 'text-[#CAD5E2] hover:bg-white/10'
               }`
             }
           >

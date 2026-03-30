@@ -14,11 +14,11 @@ export default function Reports() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [bookings, vehicles] = await Promise.all([
-          api.get('/admin/bookings'),
-          api.get('/admin/vehicles')
+        const [bRes, vRes] = await Promise.all([
+          api.get('/admin/bookings?size=1000'),
+          api.get('/admin/vehicles?size=1000')
         ]);
-        setData({ bookings, vehicles });
+        setData({ bookings: bRes.data.content, vehicles: vRes.data.content });
       } catch (error) {
         console.error('Error fetching record for reports:', error);
       } finally {
@@ -112,8 +112,8 @@ export default function Reports() {
           <LineChart data={revenueData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
             <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#64748B' }} />
-            <YAxis tick={{ fontSize: 11, fill: '#64748B' }} tickFormatter={v => `${v/1000000}M`} />
-            <Tooltip formatter={v => [`${(v/1000000).toFixed(0)} Tr ₫`, 'Doanh thu']} />
+            <YAxis tick={{ fontSize: 11, fill: '#64748B' }} tickFormatter={v => `${v / 1000000}M`} />
+            <Tooltip formatter={v => [`${(v / 1000000).toFixed(0)} Tr ₫`, 'Doanh thu']} />
             <Legend />
             <Line type="monotone" dataKey="revenue" name="Doanh thu" stroke="#1B83A1" strokeWidth={2.5} dot={{ r: 4 }} />
           </LineChart>
@@ -164,7 +164,7 @@ export default function Reports() {
                   <p className="text-xs text-gray-500">{v.trips} lượt thuê</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-semibold text-gray-900">{(v.revenue/1000000).toFixed(0)} Tr ₫</p>
+                  <p className="text-sm font-semibold text-gray-900">{(v.revenue / 1000000).toFixed(0)} Tr ₫</p>
                   <p className="text-xs text-gray-400">Doanh thu</p>
                 </div>
               </div>
