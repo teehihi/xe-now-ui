@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { api } from '../../services/api';
 
 const inp = 'w-full px-4 py-2.5 rounded-full bg-[#F3F3F5] border border-[#CAD5E2] outline-none focus:border-[#2563EB] text-sm text-[#64748B] placeholder:text-[#64748B]';
 
@@ -15,27 +16,21 @@ export default function Login() {
     e.preventDefault();
     
     try {
-      const response = await fetch('http://localhost:8080/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: form.email,
-          password: form.password
-        })
+      const data = await api.post('/auth/login', {
+        username: form.email,
+        password: form.password
       });
-
-      const data = await response.json();
       
-      if (data.authenticated && data.token) {
+      if (data.token) {
         // Save user and token
         login(data.user, data.token);
         navigate('/');
       } else {
-        alert(data.message || 'Đăng nhập thất bại');
+        alert('Đăng nhập thất bại: Không nhận được token');
       }
     } catch (error) {
       console.error('Login error:', error);
-      alert('Lỗi kết nối đến server');
+      alert(error.message || 'Lỗi kết nối đến server');
     }
   };
 

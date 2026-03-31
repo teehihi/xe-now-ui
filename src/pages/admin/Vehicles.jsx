@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Search, Plus, Pencil, Trash2, ChevronDown, X, Upload } from 'lucide-react';
+import { Search, Plus, Pencil, Trash2, ChevronDown, X, Upload, Eye } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../../services/api';
 import StatusBadge from '../../components/StatusBadge';
 
@@ -7,48 +8,75 @@ const statusOptions = ['Tất cả trạng thái', 'Available', 'Rented', 'Maint
 const statusLabel = { Available: 'Sẵn sàng', Rented: 'Đã thuê', Maintenance: 'Bảo trì' };
 const vehicleTypes = ['xe ô tô', 'xe tay ga', 'xe số'];
 
-const emptyForm = { licensePlate: '', modelId: '', type: 'xe ô tô', locationId: '', pricePerDay: '', seats: '', mileage: '', manufactureYear: 2023 };
+const emptyForm = { licensePlate: '', modelId: '', type: 'xe ô tô', locationId: '', pricePerDay: '', depositAmount: '', seats: '', mileage: '', manufactureYear: 2023 };
 
 export default function Vehicles() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [vehicles, setVehicles] = useState([]);
   const [locations, setLocations] = useState([]);
   const [models, setModels] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    const editIdParam = searchParams.get('edit');
+    if (editIdParam && vehicles?.length > 0) {
+      const v = vehicles.find(v => (v.vehicleId || v.id) === Number(editIdParam));
+      if (v) openEdit(v);
+    }
+  }, [searchParams, vehicles]);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const [vData, lData, mData] = await Promise.all([
+        api.get('/admin/vehicles'),
+        api.get('/locations'),
+        api.get('/admin/models')
+      ]);
+      setVehicles(Array.isArray(vData) ? vData : []);
+      setLocations(Array.isArray(lData) ? lData : []);
+      setModels(Array.isArray(mData) ? mData : []);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      setError('Không thể tải dữ liệu xe. Vui lòng kiểm tra quyền truy cập của bạn.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const [statusFilter, setStatusFilter] = useState('Tất cả trạng thái');
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState(null);
   const [toast, setToast] = useState('');
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const [vData, lData, mData] = await Promise.all([
-        api.get('/admin/vehicles'),
-        api.get('/locations'),
-        api.get('/admin/models')
-      ]);
-      setVehicles(vData);
-      setLocations(lData);
-      setModels(mData);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filtered = vehicles.filter(v => {
+  const filtered = (vehicles || []).filter(v => {
     const matchSearch = (v.name || '').toLowerCase().includes(search.toLowerCase()) || 
                        (v.licensePlate || '').includes(search);
     const matchStatus = statusFilter === 'Tất cả trạng thái' || v.status === statusFilter;
     return matchSearch && matchStatus;
   });
+
+  if (loading) return (
+    <div className="flex justify-center py-20">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1B83A1]"></div>
+    </div>
+  );
+
+  if (error) return (
+    <div className="max-w-4xl mx-auto mt-10 p-8 bg-red-50 border border-red-100 rounded-2xl text-center">
+      <p className="text-red-600 font-medium">{error}</p>
+      <button onClick={() => fetchData()} className="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg text-sm font-bold shadow-md hover:bg-red-700 transition-all">Thử lại</button>
+    </div>
+  );
 
   function openAdd() { 
     setForm({ ...emptyForm, locationId: locations[0]?.locationId, modelId: models[0]?.modelId }); 
@@ -238,8 +266,9 @@ export default function Vehicles() {
                 <td className="px-4 py-3"><StatusBadge status={v.status} /></td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-2">
-                    <button onClick={() => openEdit(v)} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors"><Pencil size={15} /></button>
-                    <button onClick={() => handleDelete(v.vehicleId || v.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors"><Trash2 size={15} /></button>
+                    <button onClick={() => navigate(`/admin/vehicles/${v.vehicleId || v.id}`)} title="Xem chi tiết" className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-900 transition-colors"><Eye size={15} /></button>
+                    <button onClick={() => openEdit(v)} title="Chỉnh sửa" className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors"><Pencil size={15} /></button>
+                    <button onClick={() => handleDelete(v.vehicleId || v.id)} title="Xóa" className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors"><Trash2 size={15} /></button>
                   </div>
                 </td>
               </tr>
@@ -337,7 +366,17 @@ export default function Vehicles() {
                     value={form.pricePerDay || form.dailyRate || ''}
                     onChange={e => setForm(f => ({ ...f, pricePerDay: Number(e.target.value) }))}
                     placeholder="800000"
-                    className="w-full px-4 py-2 bg-[#F3F4F6] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 border-transparent focus:border-blue-500 transition-all"
+                    className="w-full px-4 py-2 bg-[#F3F4F6] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 border-transparent focus:border-blue-500 transition-all font-medium"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">Tiền cọc (Deposit)</label>
+                  <input
+                    type="number"
+                    value={form.depositAmount || ''}
+                    onChange={e => setForm(f => ({ ...f, depositAmount: Number(e.target.value) }))}
+                    placeholder="2000000"
+                    className="w-full px-4 py-2 bg-[#F3F4F6] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 border-transparent focus:border-blue-500 transition-all font-medium"
                   />
                 </div>
                 <div className="col-span-2 space-y-1">

@@ -23,15 +23,18 @@ const vehicleStatus = [
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
         setLoading(true);
+        setError(null);
         const data = await api.get('/admin/dashboard');
         setStats(data);
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);
+        setError('Bạn không có quyền truy cập dữ liệu này hoặc phiên làm việc đã hết hạn.');
       } finally {
         setLoading(false);
       }
@@ -44,6 +47,15 @@ export default function Dashboard() {
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1B83A1]"></div>
     </div>
   );
+
+  if (error) return (
+    <div className="max-w-4xl mx-auto mt-10 p-8 bg-red-50 border border-red-100 rounded-2xl text-center">
+      <p className="text-red-600 font-medium">{error}</p>
+      <button onClick={() => window.location.reload()} className="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg text-sm font-bold">Thử lại</button>
+    </div>
+  );
+
+  if (!stats || !stats.recentBookings) return null;
 
   const totalRevenue = stats.recentBookings.reduce((sum, b) => sum + (b.totalPrice || 0), 0);
 

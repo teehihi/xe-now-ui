@@ -7,6 +7,7 @@ const emptyForm = { brandName: '' };
 export default function Brands() {
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState(null);
@@ -19,14 +20,29 @@ export default function Brands() {
   const fetchBrands = async () => {
     try {
       setLoading(true);
+      setError(null);
       const data = await api.get('/admin/brands');
-      setBrands(data);
+      setBrands(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching brands:', error);
+      setError('Không thể tải danh sách hãng xe. Vui lòng kiểm tra quyền hạn.');
     } finally {
       setLoading(false);
     }
   };
+
+  if (loading) return (
+    <div className="flex justify-center py-20">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1B83A1]"></div>
+    </div>
+  );
+
+  if (error) return (
+    <div className="max-w-4xl mx-auto mt-10 p-8 bg-red-50 border border-red-100 rounded-2xl text-center">
+      <p className="text-red-600 font-medium">{error}</p>
+      <button onClick={() => fetchBrands()} className="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg text-sm font-bold shadow-md hover:bg-red-700 transition-all">Thử lại</button>
+    </div>
+  );
 
   const showToast = (msg) => {
     setToast(msg);

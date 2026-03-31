@@ -34,18 +34,18 @@ export default function Reports() {
     </div>
   );
 
-  const totalRevenue = data.bookings.reduce((sum, b) => sum + (b.totalPrice || 0), 0);
-  const totalBookings = data.bookings.length;
+  const totalRevenue = (data.bookings || []).reduce((sum, b) => sum + (b.totalPrice || 0), 0);
+  const totalBookings = (data.bookings || []).length;
 
   const summaryCards = [
     { label: 'Tổng doanh thu', value: `${totalRevenue.toLocaleString('vi-VN')} ₫`, sub: 'Tính từ dữ liệu thực tế', icon: TrendingUp, bg: 'bg-blue-50 border-blue-200' },
     { label: 'Tổng booking', value: totalBookings, sub: 'Tất cả trạng thái', icon: CalendarCheck, bg: 'bg-green-50 border-green-200' },
-    { label: 'Số lượng xe', value: data.vehicles.length, sub: 'Hệ thống hiện tại', icon: BarChart2, bg: 'bg-purple-50 border-purple-200' },
+    { label: 'Số lượng xe', value: (data.vehicles || []).length, sub: 'Hệ thống hiện tại', icon: BarChart2, bg: 'bg-purple-50 border-purple-200' },
     { label: 'Doanh thu TB', value: totalBookings > 0 ? `${(totalRevenue / totalBookings).toLocaleString('vi-VN')} ₫` : '0 ₫', sub: 'Mỗi đơn đặt xe', icon: BarChart2, bg: 'bg-orange-50 border-orange-200' },
   ];
 
   // Logic to calculate distribution by car type
-  const typeCounts = data.vehicles.reduce((acc, v) => {
+  const typeCounts = (data.vehicles || []).reduce((acc, v) => {
     const type = v.type || 'Khác';
     acc[type] = (acc[type] || 0) + 1;
     return acc;
@@ -54,9 +54,9 @@ export default function Reports() {
   const COLORS = ['#1B83A1', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
   const typeStats = Object.entries(typeCounts).map(([type, count]) => {
-    const revenue = data.bookings
+    const revenue = (data.bookings || [])
       .filter(b => {
-        const v = data.vehicles.find(veh => veh.vehicleId === b.vehicleId);
+        const v = (data.vehicles || []).find(veh => veh.vehicleId === b.vehicleId);
         return v && v.type === type;
       })
       .reduce((sum, b) => sum + (b.totalPrice || 0), 0);

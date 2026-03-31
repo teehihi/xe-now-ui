@@ -44,12 +44,12 @@ export default function Maintenance() {
     return { label: 'HOẠT ĐỘNG TỐT', color: 'bg-green-500', text: 'text-green-600', level: 0 };
   };
 
-  const vehiclesDue = vehicles.filter(v => {
+  const vehiclesDue = (vehicles || []).filter(v => {
     const gap = (v.mileage || 0) - (v.lastMaintenanceMileage || 0);
     return gap >= THRESHOLDS.LEVEL1 || v.status === 'Maintenance' || v.status === 'MAINTENANCE';
   });
 
-  const inService = vehicles.filter(v => v.status === 'Maintenance' || v.status === 'MAINTENANCE');
+  const inService = (vehicles || []).filter(v => v.status === 'Maintenance' || v.status === 'MAINTENANCE');
 
   if (loading) return (
     <div className="flex justify-center py-20">
@@ -71,8 +71,8 @@ export default function Maintenance() {
         {[
           { label: 'Đang sửa chữa', val: inService.length, color: 'text-blue-600', bg: 'bg-blue-50' },
           { label: 'Đã quá hạn (5k+)', val: vehiclesDue.length, color: 'text-red-600', bg: 'bg-red-50' },
-          { label: 'Tổng số xe', val: vehicles.length, color: 'text-gray-600', bg: 'bg-gray-50' },
-          { label: 'Bảo trì lớn (10k)', val: vehicles.filter(v => (v.mileage - (v.lastMaintenanceMileage || 0)) >= THRESHOLDS.LEVEL3).length, color: 'text-purple-600', bg: 'bg-purple-50' },
+          { label: 'Tổng số xe', val: (vehicles || []).length, color: 'text-gray-600', bg: 'bg-gray-50' },
+          { label: 'Bảo trì lớn (10k)', val: (vehicles || []).filter(v => ((v.mileage || 0) - (v.lastMaintenanceMileage || 0)) >= THRESHOLDS.LEVEL3).length, color: 'text-purple-600', bg: 'bg-purple-50' },
         ].map(s => (
           <div key={s.label} className={`${s.bg} rounded-3xl p-6 border border-white/50 shadow-sm transition-transform hover:scale-[1.02]`}>
             <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">{s.label}</p>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { Home, CalendarCheck, User, LogIn, UserPlus, LogOut } from 'lucide-react';
+import { Home, CalendarCheck, User, LogIn, UserPlus, LogOut, Car } from 'lucide-react';
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 
@@ -60,12 +60,12 @@ export default function UserLayout() {
                 <NavLink to="/profile" className={({ isActive }) =>
                   `flex items-center gap-2 px-4 rounded-lg text-sm font-medium transition-colors ${isActive ? 'bg-gradient-to-r from-[#1B83A1] to-[#3B82F6] text-white' : 'text-[#0A0A0A] hover:bg-gray-100'}`}
                   style={{ height: 36 }}>
-                  <User size={16} /> {user.name || 'Tài khoản'}
+                  <User size={16} /> {user.name || user.fullName || 'Tài khoản'}
                 </NavLink>
-                {user.role === 'ADMIN' && (
+                {(user.role?.toUpperCase()?.includes('ADMIN')) && (
                   <button onClick={() => navigate('/admin')}
-                    className="flex items-center px-4 rounded-lg text-sm font-medium text-[#0A0A0A] bg-white ml-1"
-                    style={{ height: 32, border: '1px solid rgba(0,0,0,0.1)' }}>
+                    className="flex items-center px-4 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-orange-500 to-red-500 ml-1 shadow-sm hover:scale-105 transition-all"
+                    style={{ height: 32 }}>
                     Admin Panel
                   </button>
                 )}

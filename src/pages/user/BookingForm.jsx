@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, Mail, Phone, MapPin, Calendar, CreditCard, Check } from 'lucide-react';
+import { api } from '../../services/api';
 
 export default function BookingForm() {
   const location = useLocation();
@@ -13,8 +14,31 @@ export default function BookingForm() {
     phone: '',
     address: '',
     idNumber: '',
-    paymentMethod: 'cash'
+    paymentMethod: 'bank_transfer'
   });
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const status = await api.get('/customer/verify-status');
+        if (status.verified) {
+          const profile = await api.get(`/customer/${status.userId}`);
+          setFormData(f => ({
+            ...f,
+            fullName: profile.fullName || '',
+            email: profile.email || '',
+            phone: profile.phone || '',
+            address: profile.address || '',
+            idNumber: profile.identityCard || ''
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      }
+    };
+    fetchProfile();
+  }, []);
 
   if (!vehicle) {
     return (
@@ -27,12 +51,25 @@ export default function BookingForm() {
     );
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Implement actual booking logic
-    console.log('Booking:', { ...formData, vehicle, startDate, endDate, totalPrice });
-    alert('Đặt xe thành công! Chúng tôi sẽ liên hệ với bạn sớm.');
-    navigate('/my-bookings');
+    setLoading(true);
+    try {
+      const response = await api.post(`/bookings/create/${vehicle.id}`, {
+        startDate: startDate + 'T09:00:00',
+        endDate: endDate + 'T09:00:00',
+        pickupLocationId: vehicle.locationId,
+        returnLocationId: vehicle.locationId
+      });
+      
+      console.log('Booking created:', response);
+      navigate(`/payment/${response.bookingId}`);
+    } catch (error) {
+      console.error('Booking failed:', error);
+      alert('Đồng đặt xe thất bại: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -185,6 +222,10 @@ export default function BookingForm() {
                 <span className="font-medium">{totalPrice.toLocaleString('vi-VN')} ₫</span>
               </div>
               <div className="flex justify-between">
+                <span className="text-gray-600 font-medium">Tiền cọc (Hoàn trả)</span>
+                <span className="font-bold text-orange-600">{(vehicle.depositAmount || 0).toLocaleString('vi-VN')} ₫</span>
+              </div>
+              <div className="flex justify-between">
                 <span className="text-gray-600">Phí dịch vụ</span>
                 <span className="font-medium">0 ₫</span>
               </div>
@@ -199,7 +240,7 @@ export default function BookingForm() {
             <div className="pt-4 border-t">
               <div className="flex justify-between items-center">
                 <span className="font-semibold text-gray-900">Tổng cộng</span>
-                <span className="text-2xl font-bold text-[#1B83A1]">{totalPrice.toLocaleString('vi-VN')} ₫</span>
+                <span className="text-2xl font-bold text-[#1B83A1]">{(totalPrice + (vehicle.depositAmount || 0)).toLocaleString('vi-VN')} ₫</span>
               </div>
             </div>
           </div>

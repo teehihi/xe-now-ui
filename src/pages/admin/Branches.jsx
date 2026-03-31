@@ -7,6 +7,7 @@ const emptyForm = { branchName: '', address: '', city: '', phone: '' };
 export default function Branches() {
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState(null);
@@ -19,14 +20,29 @@ export default function Branches() {
   const fetchLocations = async () => {
     try {
       setLoading(true);
+      setError(null);
       const data = await api.get('/admin/locations');
-      setLocations(data);
+      setLocations(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching locations:', error);
+      setError('Không thể tải danh sách chi nhánh. Vui lòng kiểm tra quyền hạn.');
     } finally {
       setLoading(false);
     }
   };
+
+  if (loading) return (
+    <div className="flex justify-center py-20">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1B83A1]"></div>
+    </div>
+  );
+
+  if (error) return (
+    <div className="max-w-4xl mx-auto mt-10 p-8 bg-red-50 border border-red-100 rounded-2xl text-center">
+      <p className="text-red-600 font-medium">{error}</p>
+      <button onClick={() => fetchLocations()} className="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg text-sm font-bold shadow-md hover:bg-red-700 transition-all">Thử lại</button>
+    </div>
+  );
 
   function openAdd() { setForm(emptyForm); setEditId(null); setShowModal(true); }
   function openEdit(l) { 

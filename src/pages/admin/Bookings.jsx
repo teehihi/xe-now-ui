@@ -22,6 +22,7 @@ const statCards = [
 export default function Bookings() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('Tất cả trạng thái');
   
@@ -41,16 +42,18 @@ export default function Bookings() {
   const fetchBookings = async () => {
     try {
       setLoading(true);
+      setError(null);
       const data = await api.get('/admin/bookings');
-      setBookings(data);
+      setBookings(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching bookings:', error);
+      setError('Không thể tải danh sách đặt xe. Vui lòng kiểm tra quyền hạn của bạn.');
     } finally {
       setLoading(false);
     }
   };
 
-  const filtered = bookings.filter(b => {
+  const filtered = (bookings || []).filter(b => {
     const matchSearch = 
       String(b.customerName || '').toLowerCase().includes(search.toLowerCase()) ||
       String(b.vehicleModel || '').toLowerCase().includes(search.toLowerCase()) ||

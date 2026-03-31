@@ -11,21 +11,42 @@ const getHeaders = (isFormData = false) => {
   return headers;
 };
 
+const handleResponse = async (response) => {
+  if (response.status === 401) {
+    localStorage.removeItem('token');
+    window.location.href = '/login?error=session_expired';
+    throw new Error('Phiên đăng nhập hết hạn, vui lòng đăng nhập lại.');
+  }
+
+  const contentType = response.headers.get('content-type');
+  let result;
+  if (contentType && contentType.includes('application/json')) {
+    result = await response.json();
+  } else {
+    result = await response.text();
+  }
+
+  if (!response.ok) {
+    throw new Error(result.message || `Lỗi: ${response.statusText}`);
+  }
+
+  // Automatically unwrap ApiResponse and Page objects
+  if (result && typeof result === 'object' && 'success' in result && 'data' in result) {
+    const actualData = result.data;
+    if (actualData && typeof actualData === 'object' && 'content' in actualData && Array.isArray(actualData.content)) {
+      return actualData.content;
+    }
+    return actualData;
+  }
+  return result;
+};
+
 export const api = {
   get: async (endpoint) => {
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       headers: getHeaders()
     });
-    if (response.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login?error=session_expired';
-      throw new Error('Phiên đăng nhập hết hạn, vui lòng đăng nhập lại.');
-    }
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `API Error: ${response.statusText}`);
-    }
-    return response.json();
+    return handleResponse(response);
   },
   post: async (endpoint, data) => {
     const isFormData = data instanceof FormData;
@@ -34,17 +55,7 @@ export const api = {
       headers: getHeaders(isFormData),
       body: isFormData ? data : JSON.stringify(data)
     });
-    if (response.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login?error=session_expired';
-      throw new Error('Phiên đăng nhập hết hạn, vui lòng đăng nhập lại.');
-    }
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `API Error: ${response.statusText}`);
-    }
-    const contentType = response.headers.get('content-type');
-    return contentType && contentType.includes('application/json') ? response.json() : response.text();
+    return handleResponse(response);
   },
   put: async (endpoint, data) => {
     const isFormData = data instanceof FormData;
@@ -53,42 +64,13 @@ export const api = {
       headers: getHeaders(isFormData),
       body: isFormData ? data : JSON.stringify(data)
     });
-    if (response.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login?error=session_expired';
-      throw new Error('Phiên đăng nhập hết hạn, vui lòng đăng nhập lại.');
-    }
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `API Error: ${response.statusText}`);
-    }
-    const contentType = response.headers.get('content-type');
-    return contentType && contentType.includes('application/json') ? response.json() : response.text();
+    return handleResponse(response);
   },
   delete: async (endpoint) => {
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       method: 'DELETE',
       headers: getHeaders()
     });
-    
-    if (response.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login?error=session_expired';
-      throw new Error('Phiên đăng nhập hết hạn, vui lòng đăng nhập lại.');
-    }
-
-    if (!response.ok) {
-      // Try to parse error message from JSON response
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `Lỗi: ${response.statusText}`);
-    }
-
-    if (response.status === 204) return null;
-
-    const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) {
-      return response.json();
-    }
-    return response.text();
+    return handleResponse(response);
   }
 };

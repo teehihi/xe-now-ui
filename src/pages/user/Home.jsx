@@ -57,7 +57,8 @@ export default function Home() {
     const fetchVehicles = async () => {
       try {
         const data = await api.get('/vehicles');
-        setVehicles(data);
+        // Handle paginated response (Page object)
+        setVehicles(data.content || data || []);
       } catch (error) {
         console.error('Error fetching vehicles:', error);
       } finally {

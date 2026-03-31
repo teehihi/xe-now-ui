@@ -13,10 +13,12 @@ import Profile from './pages/user/Profile';
 import Login from './pages/user/Login';
 import Register from './pages/user/Register';
 import VerifyIdentity from './pages/user/VerifyIdentity';
+import Payment from './pages/user/Payment';
 
 // Admin pages
 import Dashboard from './pages/admin/Dashboard';
 import AdminVehicles from './pages/admin/Vehicles';
+import AdminVehicleDetail from './pages/admin/VehicleDetail';
 import Bookings from './pages/admin/Bookings';
 import Customers from './pages/admin/Customers';
 import Branches from './pages/admin/Branches';
@@ -36,6 +38,7 @@ function App() {
           <Route path="vehicles" element={<UserVehicles />} />
           <Route path="vehicles/:id" element={<VehicleDetail />} />
           <Route path="booking" element={<BookingForm />} />
+          <Route path="payment/:id" element={<Payment />} />
           <Route path="my-bookings" element={<MyBookings />} />
           <Route path="profile" element={<Profile />} />
         </Route>
@@ -50,6 +53,7 @@ function App() {
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="vehicles" element={<AdminVehicles />} />
+          <Route path="vehicles/:id" element={<AdminVehicleDetail />} />
           <Route path="bookings" element={<Bookings />} />
           <Route path="customers" element={<Customers />} />
           <Route path="branches" element={<Branches />} />

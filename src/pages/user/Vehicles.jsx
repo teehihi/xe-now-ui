@@ -22,10 +22,14 @@ const Vehicles = () => {
         setLoading(true);
         const data = await api.get('/vehicles');
         
+        // Handle paginated response (Page object)
+        const vehicleList = data.content || data || [];
+        
         // Transform data to match frontend format
-        const transformedData = data.map(vehicle => ({
+        const transformedData = vehicleList.map(vehicle => ({
           ...vehicle,
           pricePerDay: Number(vehicle.pricePerDay),
+          depositAmount: Number(vehicle.depositAmount || 0),
           status: vehicle.status.toLowerCase()
         }));
         
@@ -453,11 +457,19 @@ const Vehicles = () => {
 
                     {/* Price & Button */}
                     <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                      <div>
-                        <p className="text-2xl font-bold text-[#1B83A1]">
-                          {vehicle.pricePerDay.toLocaleString('vi-VN')}đ
-                        </p>
-                        <p className="text-xs text-gray-500">/ ngày</p>
+                      <div className="space-y-0.5">
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-2xl font-bold text-[#1B83A1]">
+                            {vehicle.pricePerDay.toLocaleString('vi-VN')}đ
+                          </span>
+                          <span className="text-xs text-gray-500">/ngày</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 opacity-80">
+                          <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Tiền cọc:</span>
+                          <span className="text-xs font-semibold text-gray-600">
+                            {(vehicle.depositAmount || 0).toLocaleString('vi-VN')}đ
+                          </span>
+                        </div>
                       </div>
                       <button
                         onClick={() => navigate(`/vehicles/${vehicle.id}`)}

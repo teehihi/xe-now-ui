@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Car, MapPin, Calendar, Shield, Star, Check, ArrowLeft, Fuel, Gauge, Users } from 'lucide-react';
 import { api } from '../../services/api';
@@ -45,12 +45,31 @@ export default function VehicleDetail() {
   const days = calculateDays();
   const totalPrice = days * vehicle.pricePerDay;
 
-  const handleBooking = () => {
+  const handleBooking = async () => {
     if (!startDate || !endDate) {
       alert('Vui lòng chọn ngày nhận và trả xe');
       return;
     }
-    navigate('/booking', { state: { vehicle, startDate, endDate, days, totalPrice } });
+
+    try {
+      // Check verification status
+      const status = await api.get('/customer/verify-status');
+      if (!status.verified) {
+        if (confirm('Tài khoản của bạn chưa được xác thực thông tin định danh (CCCD/GPLX). Bạn cần xác thực trước khi đặt xe. XÁC THỰC NGAY?')) {
+          navigate('/verify');
+        }
+        return;
+      }
+      navigate('/booking', { state: { vehicle, startDate, endDate, days, totalPrice } });
+    } catch (error) {
+      if (error.response?.status === 401) {
+        alert('Vui lòng đăng nhập để đặt xe');
+        navigate('/login');
+      } else {
+        console.error('Error checking verification status:', error);
+        alert('Có lỗi xảy ra, vui lòng thử lại sau');
+      }
+    }
   };
 
   return (
@@ -67,9 +86,9 @@ export default function VehicleDetail() {
               <img src={vehicle.image} alt={vehicle.name} className="w-full h-full object-cover" />
               <div className="absolute top-4 right-4">
                 <span className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
-                  vehicle.status === 'available' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-gray-100 text-gray-700'
+                  vehicle.status?.toLowerCase() === 'available' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-gray-100 text-gray-700'
                 }`}>
-                  {vehicle.status === 'available' ? 'Sẵn sàng' : 'Đang thuê'}
+                  {vehicle.status?.toLowerCase() === 'available' ? 'Sẵn sàng' : 'Đang thuê'}
                 </span>
               </div>
             </div>
@@ -82,7 +101,11 @@ export default function VehicleDetail() {
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-gray-500">Giá thuê/ngày</p>
-                  <p className="text-3xl font-bold text-[#1B83A1]">{vehicle.pricePerDay.toLocaleString('vi-VN')} ₫</p>
+                  <p className="text-4xl font-bold text-[#1B83A1] mb-1">{vehicle.pricePerDay.toLocaleString('vi-VN')} ₫</p>
+                  <div className="flex items-center justify-end gap-2 px-3 py-1 bg-orange-50 rounded-lg border border-orange-100">
+                    <span className="text-[10px] font-bold text-orange-400 uppercase tracking-widest">Tiền cọc</span>
+                    <span className="text-sm font-bold text-orange-700">{(Number(vehicle.depositAmount) || 0).toLocaleString('vi-VN')} ₫</span>
+                  </div>
                 </div>
               </div>
 
@@ -165,16 +188,20 @@ export default function VehicleDetail() {
                   <span className="text-gray-600">Giá thuê/ngày</span>
                   <span className="font-semibold">{vehicle.pricePerDay.toLocaleString('vi-VN')} ₫</span>
                 </div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-gray-600 font-medium">Tiền cọc (Hoàn trả)</span>
+                  <span className="font-bold text-orange-600">{(vehicle.depositAmount || 0).toLocaleString('vi-VN')} ₫</span>
+                </div>
                 <div className="border-t border-blue-200 mt-3 pt-3 flex justify-between">
-                  <span className="font-semibold text-gray-900">Tổng cộng</span>
-                  <span className="text-xl font-bold text-[#1B83A1]">{totalPrice.toLocaleString('vi-VN')} ₫</span>
+                  <span className="font-semibold text-gray-900">Tổng cộng (Tạm tính)</span>
+                  <span className="text-xl font-bold text-[#1B83A1]">{(totalPrice + (vehicle.depositAmount || 0)).toLocaleString('vi-VN')} ₫</span>
                 </div>
               </div>
             )}
 
-            <button onClick={handleBooking} disabled={vehicle.status !== 'available'}
+            <button onClick={handleBooking} disabled={vehicle.status?.toLowerCase() !== 'available'}
               className="w-full py-3 bg-gradient-to-r from-[#155DFC] to-[#1447E6] text-white rounded-xl font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">
-              {vehicle.status === 'available' ? 'Đặt xe ngay' : 'Xe không khả dụng'}
+              {vehicle.status?.toLowerCase() === 'available' ? 'Đặt xe ngay' : 'Xe không khả dụng'}
             </button>
 
             <div className="mt-6 space-y-3">
