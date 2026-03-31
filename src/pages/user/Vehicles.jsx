@@ -1,10 +1,11 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../../services/api';
 import Pagination from '../../components/Pagination';
 
 const Vehicles = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   // State for vehicles from API
   const [vehicles, setVehicles] = useState([]);
@@ -19,12 +20,12 @@ const Vehicles = () => {
 
   // Filter states
   const [filters, setFilters] = useState({
-    type: [],
+    type: searchParams.get('type') ? [searchParams.get('type')] : [],
     brand: [],
     model: [],
     seats: [],
     transmission: [],
-    location: [],
+    location: searchParams.get('location') ? [searchParams.get('location')] : [],
     priceRange: [0, 5000000],
     yearRange: [2020, 2024]
   });
