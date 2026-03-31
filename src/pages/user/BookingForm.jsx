@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, Mail, Phone, MapPin, Calendar, CreditCard, Check } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 export default function BookingForm() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, token } = useAuth();
   const { vehicle, startDate, endDate, days, totalPrice } = location.state || {};
 
   const getImageUrl = (url) => {
@@ -14,13 +16,40 @@ export default function BookingForm() {
   };
 
   const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
+    fullName: user?.fullName || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
     address: '',
     idNumber: '',
     paymentMethod: 'cash'
   });
+
+  // Fetch customer data to fill address and idNumber
+  useEffect(() => {
+    if (!token || !user?.userId) return;
+    fetch(`http://localhost:8080/api/customer/verify-status`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(r => r.json())
+      .then(res => {
+        const data = res.data || res;
+        if (data.verified && data.userId) {
+          return fetch(`http://localhost:8080/api/customer/${data.userId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          }).then(r => r.json());
+        }
+      })
+      .then(res => {
+        if (!res) return;
+        const customer = res.data || res;
+        setFormData(prev => ({
+          ...prev,
+          address: customer.address || '',
+          idNumber: customer.identityCard || '',
+        }));
+      })
+      .catch(() => {});
+  }, [token, user?.userId]);
 
   if (!vehicle) {
     return (
