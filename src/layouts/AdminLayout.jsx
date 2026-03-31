@@ -17,11 +17,11 @@ export default function AdminLayout() {
   const meta = pageMeta[pathname] ?? { title: 'Admin', subtitle: '' };
 
   return (
-    <div className="flex min-h-screen bg-[#F8FAFC]">
+    <div className="relative flex h-screen bg-[#F8FAFC] overflow-hidden">
       <AdminSidebar />
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 h-full">
         <AdminHeader title={meta.title} subtitle={meta.subtitle} />
-        <main className="flex-1 p-8 overflow-auto">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto scrollbar-hide p-8">
           <Outlet />
         </main>
       </div>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { User, Mail, Phone, MapPin, Calendar, Edit2, Save, X, ShieldCheck, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import Toast from '../../components/Toast';
 
 export default function Profile() {
   const { user, token } = useAuth();
@@ -10,6 +11,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [isVerified, setIsVerified] = useState(false);
   const [customerData, setCustomerData] = useState(null);
+  const [toast, setToast] = useState({ message: '', type: 'success' });
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -31,91 +33,62 @@ export default function Profile() {
   const fetchUserData = async () => {
     try {
       setLoading(true);
+      if (!token) { navigate('/login'); return; }
       
-      console.log('Token:', token);
-      
-      if (!token) {
-        console.error('No token available');
-        navigate('/login');
-        return;
-      }
-      
-      const headers = {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      };
-      
-      console.log('Fetching user data with headers:', headers);
+      const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
       
       // Fetch current user info
-      const userResponse = await fetch('http://localhost:8080/api/auth/me', {
-        headers
-      });
-      
-      console.log('User response status:', userResponse.status);
-      
       let currentUser = user;
+      const userResponse = await fetch('http://localhost:8080/api/auth/me', { headers });
       if (userResponse.ok) {
         const userData = await userResponse.json();
-        console.log('User data:', userData);
-        currentUser = userData.user;
-      } else {
-        const errorText = await userResponse.text();
-        console.error('Failed to fetch user:', errorText);
+        currentUser = userData.data?.user || userData.user || userData.data || userData;
       }
       
       // Check verification status
-      const verifyResponse = await fetch('http://localhost:8080/api/customer/verify-status', {
-        headers
-      });
+      const verifyResponse = await fetch('http://localhost:8080/api/customer/verify-status', { headers });
+      if (!verifyResponse.ok) {
+        // Not verified - show basic info
+        setFormData({
+          fullName: currentUser?.fullName || user?.fullName || '',
+          email: currentUser?.email || user?.email || '',
+          phone: currentUser?.phone || user?.phone || '',
+          address: '', idNumber: '',
+          dateOfBirth: currentUser?.dateOfBirth || user?.dateOfBirth || '',
+          drivingLicense: ''
+        });
+        return;
+      }
       
-      console.log('Verify response status:', verifyResponse.status);
+      const verifyJson = await verifyResponse.json();
+      const verifyData = verifyJson.data || verifyJson;
+      setIsVerified(verifyData.verified);
       
-      if (verifyResponse.ok) {
-        const verifyData = await verifyResponse.json();
-        console.log('Verify data:', verifyData);
-        setIsVerified(verifyData.verified);
-        
-        if (verifyData.verified) {
-          // Fetch customer data
-          const customerResponse = await fetch(`http://localhost:8080/api/customer/${verifyData.userId}`, {
-            headers
-          });
-          
-          console.log('Customer response status:', customerResponse.status);
-          
-          if (customerResponse.ok) {
-            const customer = await customerResponse.json();
-            console.log('Customer data:', customer);
-            setCustomerData(customer);
-            setFormData({
-              fullName: currentUser.fullName || '',
-              email: currentUser.email || '',
-              phone: currentUser.phone || '',
-              address: customer.address || '',
-              idNumber: customer.identityCard || '',
-              dateOfBirth: currentUser.dateOfBirth || '',
-              drivingLicense: customer.driverLicense || ''
-            });
-          } else {
-            const errorText = await customerResponse.text();
-            console.error('Failed to fetch customer:', errorText);
-          }
-        } else {
-          // Not verified - only show basic user info
+      if (verifyData.verified) {
+        const customerResponse = await fetch(`http://localhost:8080/api/customer/${verifyData.userId}`, { headers });
+        if (customerResponse.ok) {
+          const customerJson = await customerResponse.json();
+          const customer = customerJson.data || customerJson;
+          setCustomerData(customer);
           setFormData({
-            fullName: currentUser.fullName || '',
-            email: currentUser.email || '',
-            phone: currentUser.phone || '',
-            address: '',
-            idNumber: '',
-            dateOfBirth: currentUser.dateOfBirth || '',
-            drivingLicense: ''
+            fullName: currentUser?.fullName || user?.fullName || '',
+            email: currentUser?.email || user?.email || '',
+            phone: currentUser?.phone || user?.phone || '',
+            address: customer.address || '',
+            idNumber: customer.identityCard || '',
+            dateOfBirth: currentUser?.dateOfBirth || user?.dateOfBirth || '',
+            drivingLicense: customer.driverLicense || ''
           });
         }
       } else {
-        const errorText = await verifyResponse.text();
-        console.error('Failed to check verification status:', errorText);
+        setFormData({
+          fullName: currentUser?.fullName || user?.fullName || '',
+          email: currentUser?.email || user?.email || '',
+          phone: currentUser?.phone || user?.phone || '',
+          address: '', idNumber: '',
+          dateOfBirth: currentUser?.dateOfBirth || user?.dateOfBirth || '',
+          drivingLicense: ''
+        });
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -126,12 +99,23 @@ export default function Profile() {
 
   const handleSave = async () => {
     try {
-      // TODO: Implement update API
-      console.log('Save profile:', formData);
+      const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+      const res = await fetch('http://localhost:8080/api/users/me', {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          dateOfBirth: formData.dateOfBirth,
+        })
+      });
+      if (!res.ok) throw new Error('Cập nhật thất bại');
       setIsEditing(false);
+      setToast({ message: 'Cập nhật thông tin thành công!', type: 'success' });
     } catch (error) {
       console.error('Error saving profile:', error);
-      alert('Không thể lưu thông tin. Vui lòng thử lại.');
+      setToast({ message: 'Không thể lưu thông tin. Vui lòng thử lại.', type: 'error' });
     }
   };
 
@@ -148,6 +132,7 @@ export default function Profile() {
 
   return (
     <div className="max-w-4xl mx-auto px-8 py-8">
+      <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: '' })} />
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Thông tin tài khoản</h1>
         <p className="text-gray-500 mt-1">Quản lý thông tin cá nhân của bạn</p>

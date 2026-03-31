@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2, X, Award } from 'lucide-react';
 import { api } from '../../services/api';
+import Pagination from '../../components/Pagination';
 
 const emptyForm = { brandName: '' };
 
@@ -13,16 +14,28 @@ export default function Brands() {
   const [editId, setEditId] = useState(null);
   const [toast, setToast] = useState('');
 
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [pageSize] = useState(8);
+
   useEffect(() => {
     fetchBrands();
-  }, []);
+  }, [currentPage]);
 
   const fetchBrands = async () => {
     try {
       setLoading(true);
+<<<<<<< HEAD
       setError(null);
       const data = await api.get('/admin/brands');
       setBrands(Array.isArray(data) ? data : []);
+=======
+      const res = await api.get(`/admin/brands?page=${currentPage}&size=${pageSize}`);
+      // ApiResponse structure: { success, message, data: Page }
+      // Page structure: { content: [], totalPages, ... }
+      setBrands(res.data.content);
+      setTotalPages(res.data.totalPages);
+>>>>>>> refs/remotes/origin/main
     } catch (error) {
       console.error('Error fetching brands:', error);
       setError('Không thể tải danh sách hãng xe. Vui lòng kiểm tra quyền hạn.');
@@ -49,21 +62,21 @@ export default function Brands() {
     setTimeout(() => setToast(''), 3000);
   };
 
-  function openAdd() { 
-    setForm(emptyForm); 
-    setEditId(null); 
-    setShowModal(true); 
+  function openAdd() {
+    setForm(emptyForm);
+    setEditId(null);
+    setShowModal(true);
   }
 
-  function openEdit(b) { 
-    setForm({ ...b }); 
-    setEditId(b.brandId); 
-    setShowModal(true); 
+  function openEdit(b) {
+    setForm({ ...b });
+    setEditId(b.brandId);
+    setShowModal(true);
   }
 
   async function handleSave() {
     if (!form.brandName.trim()) return showToast('Vui lòng nhập tên hãng');
-    
+
     try {
       if (editId) {
         await api.put(`/admin/brands/${editId}`, form);
@@ -91,8 +104,8 @@ export default function Brands() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="flex flex-col h-[calc(100vh-140px)] space-y-6">
+      <div className="shrink-0 flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Quản lý hãng xe</h1>
           <p className="text-sm text-gray-500">Quản lý danh mục các thương hiệu xe trong hệ thống</p>
@@ -102,37 +115,51 @@ export default function Brands() {
         </button>
       </div>
 
-      {loading ? (
-        <div className="flex justify-center py-20">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-900"></div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {brands.map(b => (
-            <div key={b.brandId} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all group">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center group-hover:bg-gray-100 transition-colors">
-                    <Award size={24} className="text-gray-400 group-hover:text-blue-600 transition-colors" />
+      <div className="flex-1 min-h-0 flex flex-col">
+        {loading ? (
+          <div className="flex-1 flex justify-center py-20">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-900"></div>
+          </div>
+        ) : (
+          <>
+            <div className="flex-1 overflow-auto pb-4 px-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {brands.map(b => (
+                  <div key={b.brandId} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all group">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center group-hover:bg-gray-100 transition-colors">
+                          <Award size={24} className="text-gray-400 group-hover:text-blue-600 transition-colors" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-gray-900">{b.brandName}</h3>
+                          <p className="text-xs text-gray-500">ID: #{b.brandId}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => openEdit(b)} className="p-2 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600">
+                          <Pencil size={16} />
+                        </button>
+                        <button onClick={() => handleDelete(b.brandId)} className="p-2 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{b.brandName}</h3>
-                    <p className="text-xs text-gray-500">ID: #{b.brandId}</p>
-                  </div>
-                </div>
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => openEdit(b)} className="p-2 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600">
-                    <Pencil size={16} />
-                  </button>
-                  <button onClick={() => handleDelete(b.brandId)} className="p-2 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600">
-                    <Trash2 size={16} />
-                  </button>
-                </div>
+                ))}
               </div>
             </div>
-          ))}
-        </div>
-      )}
+
+            <div className="shrink-0 pt-4 border-t border-gray-100">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          </>
+        )}
+      </div>
 
       {showModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -143,13 +170,13 @@ export default function Brands() {
                 <X size={20} className="text-gray-500" />
               </button>
             </div>
-            
+
             <div className="p-8 space-y-6">
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-gray-700 ml-1">Tên hãng xe</label>
                 <div className="relative">
-                  <input 
-                    value={form.brandName} 
+                  <input
+                    value={form.brandName}
                     onChange={e => setForm({ ...form, brandName: e.target.value })}
                     placeholder="VD: Toyota, Honda..."
                     className="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all"

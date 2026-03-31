@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, Camera, ShieldCheck, FileText, Car, AlertCircle, Info, CheckCircle2 } from 'lucide-react';
+import Toast from '../../components/Toast';
 
 /* ─── Step Indicator ─────────────────────────────────────────────────────── */
 function StepIndicator({ step }) {
@@ -504,6 +505,7 @@ export default function VerifyIdentity() {
   const [step, setStep] = useState(1);
   const [cccd, setCccd] = useState(null);
   const [gplx, setGplx] = useState(null);
+  const [toast, setToast] = useState({ message: '', type: 'error' });
 
   const handleSubmit = async () => { 
     setStep('processing'); 
@@ -548,8 +550,8 @@ export default function VerifyIdentity() {
         try {
           const errorData = await response.json();
           if (errorData.step) {
-            alert(errorData.message);
-            setStep(errorData.step); // Go back to the error step
+            setToast({ message: errorData.message, type: 'error' });
+            setStep(errorData.step);
             return;
           }
         } catch (e) {
@@ -557,12 +559,12 @@ export default function VerifyIdentity() {
         }
         
         const error = await response.text();
-        alert('Xác thực thất bại: ' + error);
+        setToast({ message: 'Xác thực thất bại: ' + error, type: 'error' });
         setStep(3);
       }
     } catch (error) {
       console.error('Verification error:', error);
-      alert('Lỗi kết nối đến server');
+      setToast({ message: 'Lỗi kết nối đến server', type: 'error' });
       setStep(3);
     }
   };
@@ -571,6 +573,7 @@ export default function VerifyIdentity() {
   return (
     <div className="min-h-screen flex flex-col"
       style={{ background: 'linear-gradient(135deg,#F8FAFC 0%,#EFF6FF 50%,#F8FAFC 100%)' }}>
+      <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: '' })} />
 
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-[#E2E8F0]"

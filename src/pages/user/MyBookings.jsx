@@ -1,7 +1,13 @@
+<<<<<<< HEAD
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Car, MapPin, Clock, CreditCard, FileText, X, ShieldCheck, Info } from 'lucide-react';
+=======
+import { useEffect, useState, useCallback } from 'react';
+import { Calendar, Car, MapPin, Clock, CreditCard, FileText } from 'lucide-react';
+>>>>>>> refs/remotes/origin/main
 import { api } from '../../services/api';
+import Pagination from '../../components/Pagination';
 
 export default function MyBookings() {
   const navigate = useNavigate();
@@ -11,7 +17,39 @@ export default function MyBookings() {
   const [loading, setLoading] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState(null);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const pageSize = 5;
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      // Note: we fetch all vehicles for now to match them with bookings by ID
+      // If vehicles list becomes too large, this should be optimized
+      const [bookingsResponse, vehiclesResponse] = await Promise.all([
+        api.get(`/bookings/my-bookings?page=${currentPage}&size=${pageSize}`),
+        api.get('/vehicles?size=100') // Fetch a larger set to ensure matches
+      ]);
+      
+      const pageData = bookingsResponse.data;
+      setBookings(pageData.content);
+      setTotalPages(pageData.totalPages);
+      setTotalElements(pageData.totalElements);
+
+      // Handle both cases: paginated or list response for vehicles
+      const vData = vehiclesResponse.data?.content || vehiclesResponse;
+      setVehicles(vData);
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage]);
+
   useEffect(() => {
+<<<<<<< HEAD
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -35,8 +73,16 @@ export default function MyBookings() {
         setLoading(false);
       }
     };
+=======
+>>>>>>> refs/remotes/origin/main
     fetchData();
-  }, []);
+  }, [fetchData]);
+
+  const getImageUrl = (url) => {
+    if (!url) return '/images/car-toyota-camry.webp';
+    if (url.startsWith('http')) return url;
+    return `http://localhost:8080${url}`;
+  };
 
   const userBookings = bookings.filter(b => {
     if (filter === 'all') return true;
@@ -113,12 +159,18 @@ export default function MyBookings() {
               <div key={booking.bookingId} className="bg-white rounded-3xl border border-gray-100 p-6 hover:shadow-xl hover:shadow-gray-200/40 transition-all duration-300 group">
                 <div className="flex flex-col md:flex-row gap-8">
                   {/* Vehicle image */}
+<<<<<<< HEAD
                   <div className="w-full md:w-56 h-40 bg-gray-50 rounded-2xl overflow-hidden flex-shrink-0 relative">
                     <img src={vehicle?.image} alt={vehicle?.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     onError={e => { e.target.src = 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80&w=400'; }} />
                     <div className="absolute top-3 left-3">
                          {getStatusBadge(booking.status)}
                     </div>
+=======
+                  <div className="w-48 h-32 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
+                    <img src={getImageUrl(vehicle.image)} alt={vehicle.name} className="w-full h-full object-cover"
+                    onError={e => { e.target.style.display = 'none'; }} />
+>>>>>>> refs/remotes/origin/main
                   </div>
 
                   {/* Booking info */}
@@ -191,6 +243,7 @@ export default function MyBookings() {
         )}
       </div>
 
+<<<<<<< HEAD
       {/* Detail Modal */}
       {selectedBooking && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -278,6 +331,16 @@ export default function MyBookings() {
           </div>
         </div>
       )}
+=======
+      <div className="mt-8">
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={(page) => setCurrentPage(page)}
+        />
+      </div>
+>>>>>>> refs/remotes/origin/main
     </div>
+
   );
 }

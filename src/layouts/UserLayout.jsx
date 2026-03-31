@@ -26,7 +26,7 @@ export default function UserLayout() {
     }
   });
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F8FAFC] via-[#EFF6FF] to-[#F8FAFC]">
+    <div className="relative min-h-screen bg-gradient-to-br from-[#F8FAFC] via-[#EFF6FF] to-[#F8FAFC]">
       {/* Header */}
       <motion.header 
         variants={{ visible: { y: 0 }, hidden: { y: "-100%" } }}

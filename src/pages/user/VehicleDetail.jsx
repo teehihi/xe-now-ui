@@ -1,22 +1,58 @@
+<<<<<<< HEAD
 import { useState, useEffect } from 'react';
+=======
+import { useState, useEffect, useRef } from 'react';
+>>>>>>> refs/remotes/origin/main
 import { useParams, useNavigate } from 'react-router-dom';
-import { Car, MapPin, Calendar, Shield, Star, Check, ArrowLeft, Fuel, Gauge, Users } from 'lucide-react';
+import { Car, MapPin, Calendar, Shield, Star, Check, ArrowLeft, Fuel, Gauge, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import { api } from '../../services/api';
+import Toast from '../../components/Toast';
 
 export default function VehicleDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [vehicle, setVehicle] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState({ message: '', type: 'warning' });
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [currentImg, setCurrentImg] = useState(0);
+  const autoSlideRef = useRef(null);
+
+  const getImageUrl = (url) => {
+    if (!url) return '/images/car-toyota-camry.webp';
+    if (url.startsWith('http')) return url;
+    return `http://localhost:8080${url}`;
+  };
+
+  // Auto slide every 4 seconds
+  useEffect(() => {
+    if (!vehicle?.images?.length || vehicle.images.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrentImg(prev => (prev + 1) % vehicle.images.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [vehicle]);
+
+  const prevImg = () => {
+    setCurrentImg(prev => (prev - 1 + (vehicle?.images?.length || 1)) % (vehicle?.images?.length || 1));
+  };
+
+  const nextImg = () => {
+    setCurrentImg(prev => (prev + 1) % (vehicle?.images?.length || 1));
+  };
 
   useEffect(() => {
     const fetchVehicle = async () => {
       try {
         setLoading(true);
-        const data = await api.get(`/vehicles/${id}`);
-        setVehicle(data);
+        const res = await api.get(`/vehicles/${id}`);
+        const data = res.data?.data || res.data || res;
+        setVehicle({
+          ...data,
+          pricePerDay: Number(data.pricePerDay || data.dailyRate || 0),
+          status: (data.status || '').toLowerCase(),
+        });
       } catch (error) {
         console.error('Error fetching vehicle details:', error);
       } finally {
@@ -47,7 +83,7 @@ export default function VehicleDetail() {
 
   const handleBooking = async () => {
     if (!startDate || !endDate) {
-      alert('Vui lòng chọn ngày nhận và trả xe');
+      setToast({ message: 'Vui lòng chọn ngày nhận và trả xe', type: 'warning' });
       return;
     }
 
@@ -71,9 +107,9 @@ export default function VehicleDetail() {
       }
     }
   };
-
   return (
     <div className="max-w-6xl mx-auto px-8 py-8">
+      <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: '' })} />
       <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6">
         <ArrowLeft size={20} /> Quay lại
       </button>
@@ -83,7 +119,46 @@ export default function VehicleDetail() {
         <div className="col-span-2">
           <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
             <div className="relative h-96 bg-gray-100">
-              <img src={vehicle.image} alt={vehicle.name} className="w-full h-full object-cover" />
+              {/* Images */}
+              {vehicle.images && vehicle.images.length > 0 ? (
+                <>
+                  <div className="w-full h-full overflow-hidden">
+                    <div
+                      className="flex h-full transition-transform duration-500 ease-in-out"
+                      style={{ transform: `translateX(-${currentImg * 100}%)` }}
+                    >
+                      {vehicle.images.map((img, i) => (
+                        <img
+                          key={i}
+                          src={getImageUrl(img?.imageUrl)}
+                          alt={`${vehicle.name} ${i + 1}`}
+                          className="w-full h-full object-cover flex-shrink-0"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  {vehicle.images.length > 1 && (
+                    <>
+                      <button onClick={prevImg} className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full p-2 transition-colors">
+                        <ChevronLeft size={20} />
+                      </button>
+                      <button onClick={nextImg} className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full p-2 transition-colors">
+                        <ChevronRight size={20} />
+                      </button>
+                      {/* Dots */}
+                      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                        {vehicle.images.map((_, i) => (
+                          <button key={i} onClick={() => setCurrentImg(i)}
+                            className={`h-2 rounded-full transition-all duration-300 ${i === currentImg ? 'bg-white w-5' : 'bg-white/50 w-2'}`}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </>
+              ) : (
+                <img src={getImageUrl(vehicle.image)} alt={vehicle.name} className="w-full h-full object-cover" />
+              )}
               <div className="absolute top-4 right-4">
                 <span className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
                   vehicle.status?.toLowerCase() === 'available' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-gray-100 text-gray-700'

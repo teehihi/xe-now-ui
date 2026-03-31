@@ -1,12 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Search, Plus, Pencil, Trash2, X } from 'lucide-react';
 import { api } from '../../services/api';
-
-const statCards = [
-  { label: 'Tổng khách hàng', value: 3 },
-  { label: 'Khách hàng thân thiết', value: 24 },
-  { label: 'Mới tháng này', value: 8 },
-];
+import Pagination from '../../components/Pagination';
 
 const emptyForm = { name: '', email: '', phone: '', idCard: '', licenseExpiry: '' };
 
@@ -19,23 +14,38 @@ export default function Customers() {
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState(null);
 
-  useEffect(() => {
-    fetchCustomers();
-  }, []);
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const pageSize = 10;
 
-  const fetchCustomers = async () => {
+  const fetchCustomers = useCallback(async () => {
     try {
       setLoading(true);
+<<<<<<< HEAD
       setError(null);
       const data = await api.get('/admin/customers');
       setCustomers(Array.isArray(data) ? data : []);
+=======
+      const response = await api.get(`/admin/customers?page=${currentPage}&size=${pageSize}`);
+      const pageData = response.data;
+      setCustomers(pageData.content);
+      setTotalPages(pageData.totalPages);
+      setTotalElements(pageData.totalElements);
+>>>>>>> refs/remotes/origin/main
     } catch (error) {
       console.error('Error fetching customers:', error);
       setError('Không thể tải danh sách khách hàng. Vui lòng kiểm tra quyền hạn.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage]);
+
+  useEffect(() => {
+    fetchCustomers();
+  }, [fetchCustomers]);
+
 
   const filtered = (customers || []).filter(c =>
     (c.name || '').toLowerCase().includes(search.toLowerCase()) ||
@@ -65,32 +75,32 @@ export default function Customers() {
   function handleDelete(id) { setCustomers(cs => cs.filter(c => c.id !== id)); }
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col h-[calc(100vh-140px)] space-y-4">
       {/* Header action */}
-      <div className="flex justify-end">
+      <div className="shrink-0 flex justify-end">
         <button onClick={openAdd} className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">
           <Plus size={16} /> Thêm khách hàng
         </button>
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="shrink-0 grid grid-cols-3 gap-4">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
           <p className="text-sm text-gray-500">Tổng khách hàng</p>
-          <p className="text-3xl font-semibold text-gray-900 mt-1">{customers.length}</p>
+          <p className="text-3xl font-semibold text-gray-900 mt-1">{totalElements}</p>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
           <p className="text-sm text-gray-500">Mới tháng này</p>
           <p className="text-3xl font-semibold text-gray-900 mt-1">0</p>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-          <p className="text-sm text-gray-500">Hoạt động</p>
-          <p className="text-3xl font-semibold text-gray-900 mt-1">{filtered.length}</p>
+          <p className="text-sm text-gray-500">Đang hiển thị</p>
+          <p className="text-3xl font-semibold text-gray-900 mt-1">{customers.length}</p>
         </div>
       </div>
 
       {/* Search */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-4">
+      <div className="shrink-0 bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-4">
         <div className="relative max-w-md">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input value={search} onChange={e => setSearch(e.target.value)}
@@ -100,39 +110,49 @@ export default function Customers() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-100">
-              <th className="text-left px-4 py-3 text-gray-500 font-medium">ID</th>
-              <th className="text-left px-4 py-3 text-gray-500 font-medium">Họ và tên</th>
-              <th className="text-left px-4 py-3 text-gray-500 font-medium">Email</th>
-              <th className="text-left px-4 py-3 text-gray-500 font-medium">Số điện thoại</th>
-              <th className="text-left px-4 py-3 text-gray-500 font-medium">CMND/CCCD</th>
-              <th className="text-left px-4 py-3 text-gray-500 font-medium">GPLX hết hạn</th>
-              <th className="text-right px-4 py-3 text-gray-500 font-medium">Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((c, i) => (
-              <tr key={c.customerId || c.userId} className={`border-b border-gray-50 hover:bg-gray-50 ${i === filtered.length - 1 ? 'border-0' : ''}`}>
-                <td className="px-4 py-3 font-mono text-gray-700">#{c.customerId}</td>
-                <td className="px-4 py-3 font-medium text-gray-900">{c.name || c.fullName}</td>
-                <td className="px-4 py-3 text-gray-700">{c.email}</td>
-                <td className="px-4 py-3 font-mono text-gray-700">{c.phone || 'N/A'}</td>
-                <td className="px-4 py-3 font-mono text-gray-700">{c.identityCard || 'N/A'}</td>
-                <td className="px-4 py-3 text-gray-700">{c.driverLicenseExpiry || 'N/A'}</td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center justify-end gap-2">
-                    <button onClick={() => openEdit(c)} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600"><Pencil size={15} /></button>
-                    <button onClick={() => handleDelete(c.customerId || c.userId)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600"><Trash2 size={15} /></button>
-                  </div>
-                </td>
+      <div className="flex-1 min-h-0 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+        <div className="flex-1 overflow-auto">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 bg-white z-10 border-b border-gray-100">
+              <tr>
+                <th className="text-left px-4 py-3 text-gray-500 font-medium">ID</th>
+                <th className="text-left px-4 py-3 text-gray-500 font-medium">Họ và tên</th>
+                <th className="text-left px-4 py-3 text-gray-500 font-medium">Email</th>
+                <th className="text-left px-4 py-3 text-gray-500 font-medium">Số điện thoại</th>
+                <th className="text-left px-4 py-3 text-gray-500 font-medium">CMND/CCCD</th>
+                <th className="text-left px-4 py-3 text-gray-500 font-medium">GPLX hết hạn</th>
+                <th className="text-right px-4 py-3 text-gray-500 font-medium">Thao tác</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filtered.map((c, i) => (
+                <tr key={c.customerId || c.userId} className={`border-b border-gray-50 hover:bg-gray-50 ${i === filtered.length - 1 ? 'border-0' : ''}`}>
+                  <td className="px-4 py-3 font-mono text-gray-700">#{c.customerId}</td>
+                  <td className="px-4 py-3 font-medium text-gray-900">{c.name || c.fullName}</td>
+                  <td className="px-4 py-3 text-gray-700">{c.email}</td>
+                  <td className="px-4 py-3 font-mono text-gray-700">{c.phone || 'N/A'}</td>
+                  <td className="px-4 py-3 font-mono text-gray-700">{c.identityCard || 'N/A'}</td>
+                  <td className="px-4 py-3 text-gray-700">{c.driverLicenseExpiry || 'N/A'}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-end gap-2">
+                      <button onClick={() => openEdit(c)} className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600"><Pencil size={15} /></button>
+                      <button onClick={() => handleDelete(c.customerId || c.userId)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600"><Trash2 size={15} /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="shrink-0 px-4 py-4 border-t border-gray-100 bg-gray-50/50">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => setCurrentPage(page)}
+          />
+        </div>
       </div>
+
 
       {/* Modal */}
       {showModal && (

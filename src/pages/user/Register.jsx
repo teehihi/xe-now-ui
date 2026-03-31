@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Phone } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { api } from '../../services/api';
+import Toast from '../../components/Toast';
 
 const inp = 'w-full px-4 py-2.5 rounded-full bg-[#F3F3F5] border border-[#CAD5E2] outline-none focus:border-[#2563EB] text-sm text-[#64748B] placeholder:text-[#64748B]';
 
@@ -11,9 +13,12 @@ export default function Register() {
   const [showPw, setShowPw] = useState(false);
   const [showCPw, setShowCPw] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [toast, setToast] = useState({ message: '', type: 'success' });
+  const showToast = (message, type = 'success') => setToast({ message, type });
   const [form, setForm] = useState({ 
     fullName: '', 
-    email: '', 
+    email: '',
+    phone: '',
     password: '', 
     confirmPassword: ''
   });
@@ -21,15 +26,16 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (form.password !== form.confirmPassword) { 
-      alert('Mật khẩu không khớp!'); 
+      showToast('Mật khẩu không khớp!', 'error');
       return; 
     }
     if (!agreed) {
-      alert('Vui lòng đồng ý với điều khoản dịch vụ');
+      showToast('Vui lòng đồng ý với điều khoản dịch vụ', 'warning');
       return;
     }
 
     try {
+<<<<<<< HEAD
       await api.post('/auth/register', {
         username: form.email.split('@')[0],
         password: form.password,
@@ -42,19 +48,34 @@ export default function Register() {
     } catch (error) {
       console.error('Registration error:', error);
       alert(error.message || 'Đăng ký thất bại');
+=======
+      const result = await api.post('/auth/register', {
+        username: form.email.split('@')[0],
+        password: form.password,
+        fullName: form.fullName,
+        email: form.email,
+        phone: form.phone
+      });
+
+      if (result.success) {
+        showToast('Đăng ký thành công! Vui lòng đăng nhập.', 'success');
+        setTimeout(() => navigate('/login'), 1500);
+      } else {
+        showToast('Đăng ký thất bại: ' + (result.message || 'Lỗi không xác định'), 'error');
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      showToast('Lỗi kết nối đến server', 'error');
+>>>>>>> refs/remotes/origin/main
     }
   };
 
   return (
     <div className="h-screen flex items-center justify-center overflow-hidden"
       style={{ background: 'linear-gradient(135deg,rgba(239,246,255,0.8) 0%,#F8FAFC 50%,rgba(255,247,237,0.5) 100%)' }}>
+      <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: '' })} />
 
-      <div className="w-full flex flex-col items-center gap-6" style={{ maxWidth: 420 }}>
-
-        {/* Logo */}
-        <img src="/images/logo.webp" alt="XeNow" className="h-20 object-contain cursor-pointer"
-          onClick={() => navigate('/')}
-          onError={e => e.target.style.display = 'none'} />
+      <div className="w-full flex flex-col items-center" style={{ maxWidth: 420 }}>
 
         {/* Card */}
         <div className="w-full bg-white rounded-3xl flex flex-col gap-5 px-10 py-8"
@@ -82,6 +103,14 @@ export default function Register() {
               </label>
               <input type="email" required className={inp} placeholder="email@example.com"
                 value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="flex items-center gap-1.5 text-sm font-medium text-[#314158]">
+                <Phone size={14} /> Số điện thoại
+              </label>
+              <input type="tel" required className={inp} placeholder="09xxxxxxxxx"
+                value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -158,10 +187,6 @@ export default function Register() {
             <Link to="/login" className="font-medium text-[#2563EB]">Đăng nhập</Link>
           </p>
         </div>
-
-        <p className="text-xs text-[#62748E] flex items-center gap-1.5">
-          <Lock size={12} /> Thông tin được bảo mật an toàn với SSL 256-bit
-        </p>
       </div>
     </div>
   );

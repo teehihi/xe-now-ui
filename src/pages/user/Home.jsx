@@ -26,7 +26,31 @@ const features = [
 export default function Home() {
   const navigate = useNavigate();
   const [searchLocation, setSearchLocation] = useState('');
-  const [searchType, setSearchType] = useState('Tất cả');
+  const [searchStartDate, setSearchStartDate] = useState('');
+  const [searchEndDate, setSearchEndDate] = useState('');
+  const [searchType, setSearchType] = useState('');
+  const [locations, setLocations] = useState([]);
+  const [showLocationDrop, setShowLocationDrop] = useState(false);
+  const [showTypeDrop, setShowTypeDrop] = useState(false);
+
+  const vehicleTypes = ['Xe Ô Tô', 'Xe Tay Ga', 'Xe Số'];
+
+  useEffect(() => {
+    fetch('http://localhost:8080/api/locations')
+      .then(r => r.json())
+      .then(data => {
+        const list = data.data || data;
+        setLocations(Array.isArray(list) ? list : []);
+      }).catch(() => {});
+  }, []);
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (searchLocation) params.set('location', searchLocation);
+    if (searchType) params.set('type', searchType);
+    if (searchStartDate) params.set('startDate', searchStartDate);
+    if (searchEndDate) params.set('endDate', searchEndDate);
+    navigate(`/vehicles?${params.toString()}`);
+  };
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   const { scrollY } = useScroll();
@@ -56,9 +80,23 @@ export default function Home() {
   useEffect(() => {
     const fetchVehicles = async () => {
       try {
+<<<<<<< HEAD
         const data = await api.get('/vehicles');
         // Handle paginated response (Page object)
         setVehicles(data.content || data || []);
+=======
+        const response = await api.get('/vehicles');
+        // api.get returns { success, message, data: { content: [...] } }
+        const pageData = response.data || response;
+        const content = pageData?.content || [];
+        const transformedData = content.map(vehicle => ({
+          ...vehicle,
+          pricePerDay: Number(vehicle.pricePerDay),
+          status: vehicle.status ? vehicle.status.toLowerCase() : 'available',
+          image: vehicle.image?.startsWith('http') ? vehicle.image : `http://localhost:8080${vehicle.image || '/images/car-toyota-camry.webp'}`
+        }));
+        setVehicles(transformedData);
+>>>>>>> refs/remotes/origin/main
       } catch (error) {
         console.error('Error fetching vehicles:', error);
       } finally {
@@ -72,8 +110,8 @@ export default function Home() {
 
   const availableVehicles = vehicles.filter(v => v.status === 'available');
   const filtered = availableVehicles.filter(v =>
-    (searchType === 'Tất cả' || v.type === searchType) &&
-    (searchLocation === '' || v.location.toLowerCase().includes(searchLocation.toLowerCase()))
+    (!searchType || v.type === searchType) &&
+    (!searchLocation || v.location?.toLowerCase().includes(searchLocation.toLowerCase()))
   );
 
   const [statsRef, statsInView] = useInView({ triggerOnce: true, threshold: 0.3 });
@@ -99,17 +137,20 @@ export default function Home() {
   return (
     <>
       <ScrollProgress />
-      
+
       {/* Hero */}
-      <section className="relative h-[600px] overflow-hidden snap-start scroll-mt-[81px]">
-        <FloatingOrbs />
-        <ParticleField />
-        <SpeedLines />
+      <section className="relative h-[600px] snap-start scroll-mt-[81px]">
+        {/* Background effects - clipped */}
+        <div className="absolute inset-0 overflow-hidden">
+          <FloatingOrbs />
+          <ParticleField />
+          <SpeedLines />
         <CarAnimation />
-        
+
         <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: 'url(/images/hero-bg.webp)' }} />
         <div className="absolute inset-0 bg-gradient-to-r from-[#0F172B]/90 to-[#1C398E]/80" />
-        
+        </div>{/* end background */}
+
         <motion.div
           style={{ opacity: heroOpacity, scale: heroScale }}
           className="relative z-10 max-w-6xl mx-auto px-8 h-full flex flex-col items-center justify-center text-center"
@@ -129,7 +170,7 @@ export default function Home() {
               </span>
             </h1>
           </motion.div>
-          
+
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -144,49 +185,85 @@ export default function Home() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
-            className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl p-6 w-full max-w-4xl border border-white/20"
+            className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl p-6 w-full max-w-4xl border border-white/20 relative z-20"
           >
-            <div className="grid grid-cols-5 gap-0">
-              <div className="px-3">
+            <div className="grid grid-cols-[2fr_1.5fr_1.5fr_1.5fr_1.5fr] gap-0">
+              {/* Địa điểm */}
+              <div className="px-3 relative">
                 <label className="flex items-center gap-2 text-xs font-medium text-[#45556C] mb-2">
                   <MapPin size={14} /> Địa điểm
                 </label>
-                <button className="w-full px-3 py-2 bg-[#F3F3F5] rounded-lg text-sm text-[#717182] text-left flex items-center justify-between">
-                  <span>Chọn địa điểm</span>
-                  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" className="opacity-50">
-                    <path d="M6 9l6 6 6-6"/>
+                <button onClick={() => { setShowLocationDrop(!showLocationDrop); setShowTypeDrop(false); }}
+                  className="w-full px-3 py-2 bg-[#F3F3F5] rounded-lg text-sm text-left flex items-center justify-between">
+                  <span className={searchLocation ? 'text-gray-800' : 'text-[#717182]'}>{searchLocation || 'Chọn địa điểm'}</span>
+                  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" className="opacity-50 shrink-0">
+                    <path d="M6 9l6 6 6-6" />
                   </svg>
                 </button>
+                {showLocationDrop && (
+                  <div className="absolute top-full left-3 right-3 mt-1 bg-white rounded-xl shadow-xl border border-gray-100 z-[9999] max-h-48 overflow-y-auto">
+                    <button onClick={() => { setSearchLocation(''); setShowLocationDrop(false); }}
+                      className="w-full text-left px-4 py-2.5 text-sm text-gray-500 hover:bg-gray-50">Tất cả địa điểm</button>
+                    {locations.map(l => (
+                      <button key={l.locationId} onClick={() => { setSearchLocation(l.branchName); setShowLocationDrop(false); }}
+                        className={`w-full text-left px-4 py-2.5 text-sm hover:bg-blue-50 ${searchLocation === l.branchName ? 'text-blue-600 font-medium' : 'text-gray-700'}`}>
+                        {l.branchName}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-              
+
+              {/* Ngày nhận */}
               <div className="px-3">
                 <label className="flex items-center gap-2 text-xs font-medium text-[#45556C] mb-2">
                   <Calendar size={14} /> Ngày nhận xe
                 </label>
-                <input type="date" className="w-full px-3 py-2 bg-[#F3F3F5] rounded-lg text-sm text-[#717182] outline-none" />
+                <input type="date" value={searchStartDate} onChange={e => setSearchStartDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                  className="w-full px-3 py-2 bg-[#F3F3F5] rounded-lg text-sm text-[#717182] outline-none" />
               </div>
-              
+
+              {/* Ngày trả */}
               <div className="px-3">
                 <label className="flex items-center gap-2 text-xs font-medium text-[#45556C] mb-2">
                   <Calendar size={14} /> Ngày trả xe
                 </label>
-                <input type="date" className="w-full px-3 py-2 bg-[#F3F3F5] rounded-lg text-sm text-[#717182] outline-none" />
+                <input type="date" value={searchEndDate} onChange={e => setSearchEndDate(e.target.value)}
+                  min={searchStartDate || new Date().toISOString().split('T')[0]}
+                  className="w-full px-3 py-2 bg-[#F3F3F5] rounded-lg text-sm text-[#717182] outline-none" />
               </div>
-              
-              <div className="px-3">
+
+              {/* Loại xe */}
+              <div className="px-3 relative">
                 <label className="flex items-center gap-2 text-xs font-medium text-[#45556C] mb-2">
                   <Search size={14} /> Loại xe
                 </label>
-                <button className="w-full px-3 py-2 bg-[#F3F3F5] rounded-lg text-sm text-[#717182] text-left flex items-center justify-between">
-                  <span>Tất cả</span>
-                  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" className="opacity-50">
-                    <path d="M6 9l6 6 6-6"/>
+                <button onClick={() => { setShowTypeDrop(!showTypeDrop); setShowLocationDrop(false); }}
+                  className="w-full px-3 py-2 bg-[#F3F3F5] rounded-lg text-sm text-left flex items-center justify-between">
+                  <span className={searchType ? 'text-gray-800' : 'text-[#717182]'}>{searchType || 'Tất cả'}</span>
+                  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" className="opacity-50 shrink-0">
+                    <path d="M6 9l6 6 6-6" />
                   </svg>
                 </button>
+                {showTypeDrop && (
+                  <div className="absolute top-full left-3 right-3 mt-1 bg-white rounded-xl shadow-xl border border-gray-100 z-[9999]">
+                    <button onClick={() => { setSearchType(''); setShowTypeDrop(false); }}
+                      className="w-full text-left px-4 py-2.5 text-sm text-gray-500 hover:bg-gray-50">Tất cả</button>
+                    {vehicleTypes.map(t => (
+                      <button key={t} onClick={() => { setSearchType(t); setShowTypeDrop(false); }}
+                        className={`w-full text-left px-4 py-2.5 text-sm hover:bg-blue-50 ${searchType === t ? 'text-blue-600 font-medium' : 'text-gray-700'}`}>
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-              
+
+              {/* Tìm kiếm */}
               <div className="px-3 flex items-end">
-                <button className="w-full py-2.5 bg-gradient-to-r from-[#155DFC] to-[#1447E6] text-white rounded-lg font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+                <button onClick={handleSearch}
+                  className="w-full py-2.5 bg-gradient-to-r from-[#155DFC] to-[#1447E6] text-white rounded-lg font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
                   <Search size={16} /> Tìm kiếm
                 </button>
               </div>
@@ -203,7 +280,7 @@ export default function Home() {
               <h2 className="text-3xl font-bold text-gray-900">Xe hiện có</h2>
               <p className="text-gray-500 mt-1">{availableVehicles.length} xe đang sẵn sàng cho bạn</p>
             </div>
-            <button 
+            <button
               onClick={() => navigate('/vehicles')}
               className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-white bg-white transition-all hover:shadow-md hover:border-blue-300"
             >
@@ -227,48 +304,48 @@ export default function Home() {
               </div>
             ) : (
               filtered.slice(0, 6).map((v) => (
-              <Tilt
-                key={v.id}
-                tiltMaxAngleX={5}
-                tiltMaxAngleY={5}
-                scale={1.02}
-                transitionSpeed={2000}
-              >
-                <motion.div
-                  variants={itemVariants}
-                  whileHover={{ y: -8 }}
-                  className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-300 cursor-pointer group h-full"
-                  onClick={() => navigate(`/vehicles/${v.id}`)}
+                <Tilt
+                  key={v.id}
+                  tiltMaxAngleX={5}
+                  tiltMaxAngleY={5}
+                  scale={1.02}
+                  transitionSpeed={2000}
                 >
-                <div className="relative h-48 bg-gray-100 overflow-hidden">
-                  <img src={v.image} alt={v.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                  <div className="absolute top-3 right-3">
-                    <span className="px-2.5 py-1 bg-green-100 text-green-700 border border-green-200 rounded-lg text-xs font-medium">Sẵn sàng</span>
-                  </div>
-                  <div className="absolute top-3 left-3">
-                    <span className="px-2.5 py-1 bg-white/90 text-gray-700 rounded-lg text-xs font-medium">{v.type}</span>
-                  </div>
-                </div>
-                <div className="p-5">
-                  <h3 className="font-semibold text-gray-900">{v.name}</h3>
-                  <p className="text-sm text-gray-500 mt-0.5">{v.brand}</p>
-                  <div className="grid grid-cols-2 gap-2 mt-3 text-xs text-gray-500">
-                    <span className="flex items-center gap-1"><Car size={12} /> {v.seats} chỗ</span>
-                    <span>{v.transmission}</span>
-                    <span>{v.fuel}</span>
-                    <span>{v.mileage.toLocaleString('vi-VN')} km</span>
-                  </div>
-                  <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-gray-400">Giá thuê/ngày</p>
-                      <p className="text-lg font-bold text-[#1B83A1]">{v.pricePerDay.toLocaleString('vi-VN')} ₫</p>
+                  <motion.div
+                    variants={itemVariants}
+                    whileHover={{ y: -8 }}
+                    className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-300 cursor-pointer group h-full"
+                    onClick={() => navigate(`/vehicles/${v.id}`)}
+                  >
+                    <div className="relative h-48 bg-gray-100 overflow-hidden">
+                      <img src={v.image} alt={v.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                      <div className="absolute top-3 right-3">
+                        <span className="px-2.5 py-1 bg-green-100 text-green-700 border border-green-200 rounded-lg text-xs font-medium">Sẵn sàng</span>
+                      </div>
+                      <div className="absolute top-3 left-3">
+                        <span className="px-2.5 py-1 bg-white/90 text-gray-700 rounded-lg text-xs font-medium">{v.type}</span>
+                      </div>
                     </div>
-                    <button className="text-sm text-[#1B83A1] font-medium hover:underline">Xem chi tiết →</button>
-                  </div>
-                </div>
-              </motion.div>
-              </Tilt>
-            )))}
+                    <div className="p-5">
+                      <h3 className="font-semibold text-gray-900">{v.name}</h3>
+                      <p className="text-sm text-gray-500 mt-0.5">{v.brand}</p>
+                      <div className="grid grid-cols-2 gap-2 mt-3 text-xs text-gray-500">
+                        <span className="flex items-center gap-1"><Car size={12} /> {v.seats} chỗ</span>
+                        <span>{v.transmission}</span>
+                        <span>{v.fuel}</span>
+                        <span>{v.mileage.toLocaleString('vi-VN')} km</span>
+                      </div>
+                      <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
+                        <div>
+                          <p className="text-xs text-gray-400">Giá thuê/ngày</p>
+                          <p className="text-lg font-bold text-[#1B83A1]">{v.pricePerDay.toLocaleString('vi-VN')} ₫</p>
+                        </div>
+                        <button className="text-sm text-[#1B83A1] font-medium hover:underline">Xem chi tiết →</button>
+                      </div>
+                    </div>
+                  </motion.div>
+                </Tilt>
+              )))}
           </motion.div>
         </div>
       </section>
@@ -306,7 +383,7 @@ export default function Home() {
             </h2>
             <p className="text-gray-600 text-lg">Dịch vụ uy tín và đáng tin cậy</p>
           </motion.div>
-          
+
           <motion.div
             ref={featuresRef}
             variants={containerVariants}
@@ -377,7 +454,7 @@ export default function Home() {
       <section id="cta-section" className="relative min-h-screen flex items-center justify-center overflow-hidden snap-start snap-always">
         <div className="absolute inset-0 bg-gradient-to-br from-[#EFF6FF] via-white to-[#F0F9FF]" />
         <FloatingOrbs />
-        
+
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -406,7 +483,7 @@ export default function Home() {
           <p className="text-gray-600 text-lg mb-10 max-w-2xl mx-auto">
             Đăng ký ngay hôm nay để nhận ưu đãi đặc biệt cho lần thuê xe đầu tiên và trải nghiệm dịch vụ tốt nhất
           </p>
-          
+
           <div className="flex items-center justify-center gap-4">
             <motion.button
               whileHover={{ scale: 1.05, y: -2 }}

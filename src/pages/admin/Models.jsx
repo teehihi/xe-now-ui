@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2, X, Activity, ChevronDown } from 'lucide-react';
 import { api } from '../../services/api';
+import Pagination from '../../components/Pagination';
 
 const emptyForm = { modelName: '', brandId: '' };
 
 export default function Models() {
   const [models, setModels] = useState([]);
-  const [brands, setBrands] = useState([]);
+  const [brands, setBrands] = useState([]); // Used for dropdown
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -14,13 +15,18 @@ export default function Models() {
   const [editId, setEditId] = useState(null);
   const [toast, setToast] = useState('');
 
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [pageSize] = useState(10);
+
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [currentPage]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
+<<<<<<< HEAD
       setError(null);
       const [mData, bData] = await Promise.all([
         api.get('/admin/models'),
@@ -28,6 +34,15 @@ export default function Models() {
       ]);
       setModels(Array.isArray(mData) ? mData : []);
       setBrands(Array.isArray(bData) ? bData : []);
+=======
+      const [mRes, bRes] = await Promise.all([
+        api.get(`/admin/models?page=${currentPage}&size=${pageSize}`),
+        api.get('/admin/brands?size=100') // Get more for the dropdown
+      ]);
+      setModels(mRes.data.content);
+      setTotalPages(mRes.data.totalPages);
+      setBrands(bRes.data.content);
+>>>>>>> refs/remotes/origin/main
     } catch (error) {
       console.error('Error fetching models:', error);
       setError('Không thể tải danh sách mẫu xe. Vui lòng kiểm tra quyền hạn.');
@@ -54,21 +69,21 @@ export default function Models() {
     setTimeout(() => setToast(''), 3000);
   };
 
-  function openAdd() { 
-    setForm({ ...emptyForm, brandId: brands[0]?.brandId }); 
-    setEditId(null); 
-    setShowModal(true); 
+  function openAdd() {
+    setForm({ ...emptyForm, brandId: brands[0]?.brandId || '' });
+    setEditId(null);
+    setShowModal(true);
   }
 
-  function openEdit(m) { 
-    setForm({ ...m }); 
-    setEditId(m.modelId); 
-    setShowModal(true); 
+  function openEdit(m) {
+    setForm({ ...m });
+    setEditId(m.modelId);
+    setShowModal(true);
   }
 
   async function handleSave() {
     if (!form.modelName.trim() || !form.brandId) return showToast('Vui lòng điền đủ thông tin');
-    
+
     try {
       const payload = {
         modelName: form.modelName,
@@ -101,8 +116,8 @@ export default function Models() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="flex flex-col h-[calc(100vh-140px)] space-y-6">
+      <div className="shrink-0 flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Quản lý mẫu xe</h1>
           <p className="text-sm text-gray-500">Quản lý danh sách các dòng xe tương ứng với từng thương hiệu</p>
@@ -112,10 +127,10 @@ export default function Models() {
         </button>
       </div>
 
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="flex-1 bg-white rounded-3xl border border-gray-100 shadow-sm overflow-auto min-h-0">
         <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-gray-50/50 border-b border-gray-100">
+          <thead className="sticky top-0 bg-white z-10 border-b border-gray-100">
+            <tr className="bg-gray-50/50">
               <th className="text-left px-8 py-4 text-gray-500 font-semibold">ID</th>
               <th className="text-left px-8 py-4 text-gray-500 font-semibold">Mẫu xe</th>
               <th className="text-left px-8 py-4 text-gray-500 font-semibold">Hãng xe</th>
@@ -127,36 +142,46 @@ export default function Models() {
               <tr>
                 <td colSpan="4" className="py-12 text-center text-gray-400">Đang tải dữ liệu...</td>
               </tr>
-            ) : models.map((m) => (
-              <tr key={m.modelId} className="hover:bg-gray-50 transition-colors">
-                <td className="px-8 py-4 text-gray-500 font-mono text-xs">#{m.modelId}</td>
-                <td className="px-8 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-                      <Activity size={14} className="text-[#1B83A1]" />
+            ) : (
+              models.map((m) => (
+                <tr key={m.modelId} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-8 py-4 text-gray-500 font-mono text-xs">#{m.modelId}</td>
+                  <td className="px-8 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                        <Activity size={14} className="text-[#1B83A1]" />
+                      </div>
+                      <span className="font-semibold text-gray-900">{m.modelName}</span>
                     </div>
-                    <span className="font-semibold text-gray-900">{m.modelName}</span>
-                  </div>
-                </td>
-                <td className="px-8 py-4">
-                  <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-medium">
-                    {m.brandName || 'N/A'}
-                  </span>
-                </td>
-                <td className="px-8 py-4">
-                  <div className="flex justify-end gap-2">
-                    <button onClick={() => openEdit(m)} className="p-2 rounded-xl hover:bg-blue-50 text-gray-400 hover:text-blue-600">
-                      <Pencil size={16} />
-                    </button>
-                    <button onClick={() => handleDelete(m.modelId)} className="p-2 rounded-xl hover:bg-red-50 text-gray-400 hover:text-red-600">
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="px-8 py-4">
+                    <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-medium">
+                      {m.brandName || 'N/A'}
+                    </span>
+                  </td>
+                  <td className="px-8 py-4">
+                    <div className="flex justify-end gap-2">
+                      <button onClick={() => openEdit(m)} className="p-2 rounded-xl hover:bg-blue-50 text-gray-400 hover:text-blue-600">
+                        <Pencil size={16} />
+                      </button>
+                      <button onClick={() => handleDelete(m.modelId)} className="p-2 rounded-xl hover:bg-red-50 text-gray-400 hover:text-red-600">
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
+      </div>
+
+      <div className="shrink-0 pt-2 pb-2">
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       {showModal && (
@@ -168,12 +193,12 @@ export default function Models() {
                 <X size={20} className="text-gray-500" />
               </button>
             </div>
-            
+
             <div className="p-8 space-y-6">
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-gray-700 ml-1">Tên mẫu xe</label>
-                <input 
-                  value={form.modelName} 
+                <input
+                  value={form.modelName}
                   onChange={e => setForm({ ...form, modelName: e.target.value })}
                   placeholder="VD: Camry, CR-V, Ranger..."
                   className="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all"
@@ -183,8 +208,8 @@ export default function Models() {
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-gray-700 ml-1">Thuộc hãng xe</label>
                 <div className="relative">
-                  <select 
-                    value={form.brandId} 
+                  <select
+                    value={form.brandId}
                     onChange={e => setForm({ ...form, brandId: e.target.value })}
                     className="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none appearance-none transition-all cursor-pointer"
                   >
