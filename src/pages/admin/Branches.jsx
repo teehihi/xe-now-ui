@@ -26,15 +26,10 @@ export default function Branches() {
   const fetchLocations = async () => {
     try {
       setLoading(true);
-<<<<<<< HEAD
       setError(null);
-      const data = await api.get('/admin/locations');
-      setLocations(Array.isArray(data) ? data : []);
-=======
       const res = await api.get(`/admin/locations?page=${currentPage}&size=${pageSize}`);
-      setLocations(res.data.content);
-      setTotalPages(res.data.totalPages);
->>>>>>> refs/remotes/origin/main
+      setLocations(Array.isArray(res.content) ? res.content : []);
+      setTotalPages(res.totalPages || 0);
     } catch (error) {
       console.error('Error fetching locations:', error);
       setError('Không thể tải danh sách chi nhánh. Vui lòng kiểm tra quyền hạn.');

@@ -25,17 +25,10 @@ export default function Brands() {
   const fetchBrands = async () => {
     try {
       setLoading(true);
-<<<<<<< HEAD
       setError(null);
-      const data = await api.get('/admin/brands');
-      setBrands(Array.isArray(data) ? data : []);
-=======
       const res = await api.get(`/admin/brands?page=${currentPage}&size=${pageSize}`);
-      // ApiResponse structure: { success, message, data: Page }
-      // Page structure: { content: [], totalPages, ... }
-      setBrands(res.data.content);
-      setTotalPages(res.data.totalPages);
->>>>>>> refs/remotes/origin/main
+      setBrands(Array.isArray(res.content) ? res.content : []);
+      setTotalPages(res.totalPages || 0);
     } catch (error) {
       console.error('Error fetching brands:', error);
       setError('Không thể tải danh sách hãng xe. Vui lòng kiểm tra quyền hạn.');

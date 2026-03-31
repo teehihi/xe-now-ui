@@ -26,23 +26,14 @@ export default function Models() {
   const fetchData = async () => {
     try {
       setLoading(true);
-<<<<<<< HEAD
       setError(null);
       const [mData, bData] = await Promise.all([
-        api.get('/admin/models'),
-        api.get('/admin/brands')
-      ]);
-      setModels(Array.isArray(mData) ? mData : []);
-      setBrands(Array.isArray(bData) ? bData : []);
-=======
-      const [mRes, bRes] = await Promise.all([
         api.get(`/admin/models?page=${currentPage}&size=${pageSize}`),
-        api.get('/admin/brands?size=100') // Get more for the dropdown
+        api.get('/admin/brands?size=100')
       ]);
-      setModels(mRes.data.content);
-      setTotalPages(mRes.data.totalPages);
-      setBrands(bRes.data.content);
->>>>>>> refs/remotes/origin/main
+      setModels(Array.isArray(mData.content) ? mData.content : []);
+      setTotalPages(mData.totalPages || 0);
+      setBrands(Array.isArray(bData.content) ? bData.content : []);
     } catch (error) {
       console.error('Error fetching models:', error);
       setError('Không thể tải danh sách mẫu xe. Vui lòng kiểm tra quyền hạn.');

@@ -80,23 +80,16 @@ export default function Home() {
   useEffect(() => {
     const fetchVehicles = async () => {
       try {
-<<<<<<< HEAD
-        const data = await api.get('/vehicles');
+        const res = await api.get('/vehicles');
         // Handle paginated response (Page object)
-        setVehicles(data.content || data || []);
-=======
-        const response = await api.get('/vehicles');
-        // api.get returns { success, message, data: { content: [...] } }
-        const pageData = response.data || response;
-        const content = pageData?.content || [];
+        const content = res?.content || res?.data || [];
         const transformedData = content.map(vehicle => ({
           ...vehicle,
-          pricePerDay: Number(vehicle.pricePerDay),
+          pricePerDay: Number(vehicle.pricePerDay || vehicle.dailyRate || 0),
           status: vehicle.status ? vehicle.status.toLowerCase() : 'available',
           image: vehicle.image?.startsWith('http') ? vehicle.image : `http://localhost:8080${vehicle.image || '/images/car-toyota-camry.webp'}`
         }));
         setVehicles(transformedData);
->>>>>>> refs/remotes/origin/main
       } catch (error) {
         console.error('Error fetching vehicles:', error);
       } finally {

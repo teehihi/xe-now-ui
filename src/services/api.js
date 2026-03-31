@@ -15,31 +15,31 @@ const getHeaders = (isFormData = false) => {
 };
 
 const handleResponse = async (response) => {
-  if (response.status === 401) {
-    localStorage.removeItem('token');
-    window.location.href = '/login?error=session_expired';
-    throw new Error('Phiên đăng nhập hết hạn, vui lòng đăng nhập lại.');
-  }
-
   const contentType = response.headers.get('content-type');
   let result;
-  if (contentType && contentType.includes('application/json')) {
-    result = await response.json();
-  } else {
-    result = await response.text();
+  
+  try {
+    if (contentType && contentType.includes('application/json')) {
+      result = await response.json();
+    } else {
+      result = await response.text();
+    }
+  } catch (e) {
+    result = null;
   }
 
   if (!response.ok) {
-    throw new Error(result.message || `Lỗi: ${response.statusText}`);
+    if (response.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login?error=session_expired';
+      throw new Error('Phiên đăng nhập hết hạn, vui lòng đăng nhập lại.');
+    }
+    throw new Error(result?.message || `Lỗi: ${response.statusText}`);
   }
 
-  // Automatically unwrap ApiResponse and Page objects
+  // Automatically unwrap ApiResponse structure
   if (result && typeof result === 'object' && 'success' in result && 'data' in result) {
-    const actualData = result.data;
-    if (actualData && typeof actualData === 'object' && 'content' in actualData && Array.isArray(actualData.content)) {
-      return actualData.content;
-    }
-    return actualData;
+    return result.data;
   }
   return result;
 };
@@ -81,7 +81,7 @@ const handleRefreshToken = async () => {
     localStorage.removeItem('user');
     // Save current path to redirect back after login if needed
     const currentPath = window.location.pathname;
-    if (currentPath !== '/login') {
+    if (currentPath !== '/login' && !currentPath.includes('/login')) {
       window.location.href = `/login?error=session_expired&redirect=${encodeURIComponent(currentPath)}`;
     }
     return null;
@@ -127,14 +127,8 @@ export const api = {
     }
 
     if (response.status === 204) return null;
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `API Error: ${response.statusText}`);
-    }
-
-    const contentType = response.headers.get('content-type');
-    return contentType && contentType.includes('application/json') ? response.json() : response.text();
+    
+    return handleResponse(response);
   },
 
   get: (endpoint) => api.request(endpoint, { method: 'GET' }),

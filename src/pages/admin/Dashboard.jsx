@@ -29,15 +29,9 @@ export default function Dashboard() {
     const fetchDashboard = async () => {
       try {
         setLoading(true);
-<<<<<<< HEAD
         setError(null);
-        const data = await api.get('/admin/dashboard');
-        setStats(data);
-=======
         const res = await api.get('/admin/dashboard');
-        // ApiResponse structure: { success, message, data: stats }
-        setStats(res.data);
->>>>>>> refs/remotes/origin/main
+        setStats(res);
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);
         setError('Bạn không có quyền truy cập dữ liệu này hoặc phiên làm việc đã hết hạn.');

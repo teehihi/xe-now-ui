@@ -21,7 +21,7 @@ export default function Maintenance() {
       setLoading(true);
       const res = await api.get('/admin/vehicles?size=1000');
       // ApiResponse structure: { success, message, data: Page }
-      setVehicles(res.data.content);
+      setVehicles(res.content);
     } catch (error) {
       console.error('Error fetching vehicles:', error);
     } finally {

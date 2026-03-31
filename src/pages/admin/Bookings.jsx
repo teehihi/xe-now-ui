@@ -47,20 +47,15 @@ export default function Bookings() {
   const fetchBookings = useCallback(async () => {
     try {
       setLoading(true);
-<<<<<<< HEAD
       setError(null);
-      const data = await api.get('/admin/bookings');
-      setBookings(Array.isArray(data) ? data : []);
-=======
       const [res, sRes] = await Promise.all([
         api.get(`/admin/bookings?page=${currentPage}&size=${pageSize}`),
         api.get('/admin/dashboard')
       ]);
-      setBookings(res.data.content);
-      setTotalPages(res.data.totalPages);
-      setTotalElements(res.data.totalElements);
-      setStats(sRes.data);
->>>>>>> refs/remotes/origin/main
+      setBookings(Array.isArray(res.content) ? res.content : []);
+      setTotalPages(res.totalPages || 0);
+      setTotalElements(res.totalElements || 0);
+      setStats(sRes);
     } catch (error) {
       console.error('Error fetching bookings:', error);
       setError('Không thể tải danh sách đặt xe. Vui lòng kiểm tra quyền hạn của bạn.');
@@ -74,13 +69,8 @@ export default function Bookings() {
   }, [fetchBookings]);
 
 
-<<<<<<< HEAD
   const filtered = (bookings || []).filter(b => {
-    const matchSearch = 
-=======
-  const filtered = bookings.filter(b => {
     const matchSearch =
->>>>>>> refs/remotes/origin/main
       String(b.customerName || '').toLowerCase().includes(search.toLowerCase()) ||
       String(b.vehicleModel || '').toLowerCase().includes(search.toLowerCase()) ||
       String(b.bookingId || '').includes(search);

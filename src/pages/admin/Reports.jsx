@@ -18,7 +18,7 @@ export default function Reports() {
           api.get('/admin/bookings?size=1000'),
           api.get('/admin/vehicles?size=1000')
         ]);
-        setData({ bookings: bRes.data.content, vehicles: vRes.data.content });
+        setData({ bookings: bRes.content, vehicles: vRes.content });
       } catch (error) {
         console.error('Error fetching record for reports:', error);
       } finally {

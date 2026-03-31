@@ -1,11 +1,6 @@
-<<<<<<< HEAD
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Search, Plus, Pencil, Trash2, ChevronDown, X, Upload, Eye } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-=======
-import { useEffect, useState, useCallback } from 'react';
-import { Search, Plus, Pencil, Trash2, X, Upload } from 'lucide-react';
->>>>>>> refs/remotes/origin/main
 import { api } from '../../services/api';
 import StatusBadge from '../../components/StatusBadge';
 import Pagination from '../../components/Pagination';
@@ -15,11 +10,7 @@ const statusOptions = ['Tất cả trạng thái', 'Available', 'Rented', 'Maint
 const statusLabel = { Available: 'Sẵn sàng', Rented: 'Đã thuê', Maintenance: 'Bảo trì' };
 const vehicleTypes = ['Xe Ô Tô', 'Xe Tay Ga', 'Xe Số'];
 
-<<<<<<< HEAD
-const emptyForm = { licensePlate: '', modelId: '', type: 'xe ô tô', locationId: '', pricePerDay: '', depositAmount: '', seats: '', mileage: '', manufactureYear: 2023 };
-=======
-const emptyForm = { licensePlate: '', modelId: '', type: 'Xe Ô Tô', locationId: '', pricePerDay: '', seats: '', mileage: '', manufactureYear: 2024 };
->>>>>>> refs/remotes/origin/main
+const emptyForm = { licensePlate: '', modelId: '', type: 'Xe Ô Tô', locationId: '', pricePerDay: '', depositAmount: '', seats: '', mileage: '', manufactureYear: 2024 };
 
 export default function Vehicles() {
   const navigate = useNavigate();
@@ -43,39 +34,6 @@ export default function Vehicles() {
     }
   }, [searchParams, vehicles]);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const [vData, lData, mData] = await Promise.all([
-        api.get('/admin/vehicles'),
-        api.get('/locations'),
-        api.get('/admin/models')
-      ]);
-      setVehicles(Array.isArray(vData) ? vData : []);
-      setLocations(Array.isArray(lData) ? lData : []);
-      setModels(Array.isArray(mData) ? mData : []);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      setError('Không thể tải dữ liệu xe. Vui lòng kiểm tra quyền truy cập của bạn.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const [statusFilter, setStatusFilter] = useState('Tất cả trạng thái');
-  const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState(emptyForm);
-  const [editId, setEditId] = useState(null);
-  const [pendingFiles, setPendingFiles] = useState([]);
-  const [previewUrls, setPreviewUrls] = useState([]);
-  const [toast, setToast] = useState('');
-
-<<<<<<< HEAD
-  const filtered = (vehicles || []).filter(v => {
-    const matchSearch = (v.name || '').toLowerCase().includes(search.toLowerCase()) || 
-                       (v.licensePlate || '').includes(search);
-=======
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
@@ -84,25 +42,21 @@ export default function Vehicles() {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const [vRes, lRes, mRes] = await Promise.all([
         api.get(`/admin/vehicles?page=${currentPage}&size=${pageSize}`),
         api.get('/admin/locations?size=1000'),
         api.get('/admin/models?size=1000')
       ]);
 
-      // Handle ApiResponse structure from backend (wrapped in .data)
-      const vPage = vRes.data || vRes;
-      setVehicles(vPage.content ?? []);
-      setTotalPages(vPage.totalPages ?? 0);
-      setTotalElements(vPage.totalElements ?? 0);
-
-      const lPage = lRes.data || lRes;
-      setLocations(lPage.content ?? []);
-
-      const mPage = mRes.data || mRes;
-      setModels(mPage.content ?? []);
+      setVehicles(vRes.content ?? []);
+      setTotalPages(vRes.totalPages ?? 0);
+      setTotalElements(vRes.totalElements ?? 0);
+      setLocations(lRes.content ?? []);
+      setModels(mRes.content ?? []);
     } catch (error) {
       console.error('Error fetching data:', error);
+      setError('Không thể tải dữ liệu xe. Vui lòng kiểm tra quyền truy cập của bạn.');
     } finally {
       setLoading(false);
     }
@@ -112,15 +66,13 @@ export default function Vehicles() {
     fetchData();
   }, [fetchData]);
 
-  const filtered = vehicles.filter(v => {
+  const filtered = (vehicles || []).filter(v => {
     const matchSearch = String(v.modelName || v.name || '').toLowerCase().includes(search.toLowerCase()) ||
-      String(v.licensePlate || '').toLowerCase().includes(search.toLowerCase());
->>>>>>> refs/remotes/origin/main
+                       String(v.licensePlate || '').toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'Tất cả trạng thái' || v.status === statusFilter;
     return matchSearch && matchStatus;
   });
 
-<<<<<<< HEAD
   if (loading) return (
     <div className="flex justify-center py-20">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1B83A1]"></div>
@@ -134,18 +86,12 @@ export default function Vehicles() {
     </div>
   );
 
-  function openAdd() { 
-    setForm({ ...emptyForm, locationId: locations[0]?.locationId, modelId: models[0]?.modelId }); 
-    setEditId(null); 
-    setShowModal(true); 
-=======
   function openAdd() {
     setForm({ ...emptyForm, locationId: locations[0]?.locationId, modelId: models[0]?.modelId });
     setEditId(null);
     setPendingFiles([]);
     setPreviewUrls([]);
     setShowModal(true);
->>>>>>> refs/remotes/origin/main
   }
 
   function openEdit(v) {
@@ -364,12 +310,8 @@ export default function Vehicles() {
                 <td className="px-4 py-3"><StatusBadge status={v.status} /></td>
                 <td className="px-4 py-3 text-right">
                   <div className="flex items-center justify-end gap-2">
-<<<<<<< HEAD
                     <button onClick={() => navigate(`/admin/vehicles/${v.vehicleId || v.id}`)} title="Xem chi tiết" className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-900 transition-colors"><Eye size={15} /></button>
                     <button onClick={() => openEdit(v)} title="Chỉnh sửa" className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors"><Pencil size={15} /></button>
-=======
-                    <button onClick={() => openEdit(v)} title="Sửa" className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors"><Pencil size={15} /></button>
->>>>>>> refs/remotes/origin/main
                     <button onClick={() => handleDelete(v.vehicleId || v.id)} title="Xóa" className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors"><Trash2 size={15} /></button>
                   </div>
                 </td>
@@ -457,7 +399,6 @@ export default function Vehicles() {
                     type="number"
                     value={form.pricePerDay || form.dailyRate || ''}
                     onChange={e => setForm(f => ({ ...f, pricePerDay: Number(e.target.value) }))}
-<<<<<<< HEAD
                     placeholder="800000"
                     className="w-full px-4 py-2 bg-[#F3F4F6] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 border-transparent focus:border-blue-500 transition-all font-medium"
                   />
@@ -470,9 +411,6 @@ export default function Vehicles() {
                     onChange={e => setForm(f => ({ ...f, depositAmount: Number(e.target.value) }))}
                     placeholder="2000000"
                     className="w-full px-4 py-2 bg-[#F3F4F6] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 border-transparent focus:border-blue-500 transition-all font-medium"
-=======
-                    className="w-full px-4 py-2 bg-[#F3F4F6] rounded-xl text-sm outline-none"
->>>>>>> refs/remotes/origin/main
                   />
                 </div>
 

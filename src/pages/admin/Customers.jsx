@@ -23,17 +23,11 @@ export default function Customers() {
   const fetchCustomers = useCallback(async () => {
     try {
       setLoading(true);
-<<<<<<< HEAD
       setError(null);
-      const data = await api.get('/admin/customers');
-      setCustomers(Array.isArray(data) ? data : []);
-=======
-      const response = await api.get(`/admin/customers?page=${currentPage}&size=${pageSize}`);
-      const pageData = response.data;
-      setCustomers(pageData.content);
-      setTotalPages(pageData.totalPages);
-      setTotalElements(pageData.totalElements);
->>>>>>> refs/remotes/origin/main
+      const res = await api.get(`/admin/customers?page=${currentPage}&size=${pageSize}`);
+      setCustomers(Array.isArray(res.content) ? res.content : []);
+      setTotalPages(res.totalPages || 0);
+      setTotalElements(res.totalElements || 0);
     } catch (error) {
       console.error('Error fetching customers:', error);
       setError('Không thể tải danh sách khách hàng. Vui lòng kiểm tra quyền hạn.');

@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-import { useState, useEffect } from 'react';
-=======
 import { useState, useEffect, useRef } from 'react';
->>>>>>> refs/remotes/origin/main
 import { useParams, useNavigate } from 'react-router-dom';
 import { Car, MapPin, Calendar, Shield, Star, Check, ArrowLeft, Fuel, Gauge, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import { api } from '../../services/api';

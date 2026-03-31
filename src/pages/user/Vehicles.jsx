@@ -42,19 +42,6 @@ const Vehicles = () => {
     const fetchVehicles = async () => {
       try {
         setLoading(true);
-<<<<<<< HEAD
-        const data = await api.get('/vehicles');
-        
-        // Handle paginated response (Page object)
-        const vehicleList = data.content || data || [];
-        
-        // Transform data to match frontend format
-        const transformedData = vehicleList.map(vehicle => ({
-          ...vehicle,
-          pricePerDay: Number(vehicle.pricePerDay),
-          depositAmount: Number(vehicle.depositAmount || 0),
-          status: vehicle.status.toLowerCase()
-=======
         const params = new URLSearchParams();
         params.append('page', currentPage);
         params.append('size', pageSize);
@@ -64,17 +51,17 @@ const Vehicles = () => {
         if (filters.location.length > 0) params.append('location', filters.location.join(','));
         if (filters.transmission.length > 0) params.append('transmission', filters.transmission.join(','));
 
-        const response = await api.get(`/vehicles?${params.toString()}`);
-        const pageData = response.data?.data || response.data;
-        const transformedData = (pageData.content || []).map(vehicle => ({
+        const res = await api.get(`/vehicles?${params.toString()}`);
+        // Handle paginated response (Page object)
+        const content = res?.content || [];
+        const transformedData = content.map(vehicle => ({
           ...vehicle,
-          pricePerDay: Number(vehicle.pricePerDay),
-          status: vehicle.status.toLowerCase(),
->>>>>>> refs/remotes/origin/main
+          pricePerDay: Number(vehicle.pricePerDay || vehicle.dailyRate || 0),
+          image: vehicle.image?.startsWith('http') ? vehicle.image : `http://localhost:8080${vehicle.image || '/images/car-toyota-camry.webp'}`
         }));
         setVehicles(transformedData);
-        setTotalPages(pageData.totalPages || 1);
-        setTotalElements(pageData.totalElements || 0);
+        setTotalPages(res.totalPages || 1);
+        setTotalElements(res.totalElements || 0);
       } catch (err) {
         console.error('Error fetching vehicles:', err);
         setError(err.message);
@@ -327,22 +314,6 @@ const Vehicles = () => {
                       </div>
                     </div>
 
-<<<<<<< HEAD
-                    {/* Price & Button */}
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                      <div className="space-y-0.5">
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-2xl font-bold text-[#1B83A1]">
-                            {vehicle.pricePerDay.toLocaleString('vi-VN')}đ
-                          </span>
-                          <span className="text-xs text-gray-500">/ngày</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 opacity-80">
-                          <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Tiền cọc:</span>
-                          <span className="text-xs font-semibold text-gray-600">
-                            {(vehicle.depositAmount || 0).toLocaleString('vi-VN')}đ
-                          </span>
-=======
                     {/* Price Range */}
                     <div>
                       <h3 className="text-gray-900 font-medium mb-3">Giá thuê/ngày</h3>
@@ -384,7 +355,6 @@ const Vehicles = () => {
                         <div className="flex justify-between text-sm text-gray-500">
                           <span>{filters.yearRange[0]}</span>
                           <span>2024</span>
->>>>>>> refs/remotes/origin/main
                         </div>
                       </div>
                     </div>

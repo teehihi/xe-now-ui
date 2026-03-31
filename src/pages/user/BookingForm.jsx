@@ -1,11 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, Mail, Phone, MapPin, Calendar, CreditCard, Check } from 'lucide-react';
-<<<<<<< HEAD
 import { api } from '../../services/api';
-=======
 import { useAuth } from '../../context/AuthContext';
->>>>>>> refs/remotes/origin/main
 
 export default function BookingForm() {
   const location = useLocation();
@@ -91,7 +88,6 @@ export default function BookingForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-<<<<<<< HEAD
     setLoading(true);
     try {
       const response = await api.post(`/bookings/create/${vehicle.id}`, {
@@ -109,11 +105,6 @@ export default function BookingForm() {
     } finally {
       setLoading(false);
     }
-=======
-    // TODO: Implement actual booking logic
-    console.log('Booking:', { ...formData, vehicle, startDate, endDate, totalPrice });
-    navigate('/my-bookings');
->>>>>>> refs/remotes/origin/main
   };
 
   return (

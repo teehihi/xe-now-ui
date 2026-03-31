@@ -35,20 +35,6 @@ export default function Register() {
     }
 
     try {
-<<<<<<< HEAD
-      await api.post('/auth/register', {
-        username: form.email.split('@')[0],
-        password: form.password,
-        fullName: form.fullName,
-        email: form.email
-      });
-
-      alert('Đăng ký thành công! Vui lòng đăng nhập.');
-      navigate('/login');
-    } catch (error) {
-      console.error('Registration error:', error);
-      alert(error.message || 'Đăng ký thất bại');
-=======
       const result = await api.post('/auth/register', {
         username: form.email.split('@')[0],
         password: form.password,
@@ -57,7 +43,7 @@ export default function Register() {
         phone: form.phone
       });
 
-      if (result.success) {
+      if (result.success || result.id) {
         showToast('Đăng ký thành công! Vui lòng đăng nhập.', 'success');
         setTimeout(() => navigate('/login'), 1500);
       } else {
@@ -65,8 +51,7 @@ export default function Register() {
       }
     } catch (error) {
       console.error('Registration error:', error);
-      showToast('Lỗi kết nối đến server', 'error');
->>>>>>> refs/remotes/origin/main
+      showToast(error.response?.data?.message || 'Lỗi kết nối đến server', 'error');
     }
   };
 

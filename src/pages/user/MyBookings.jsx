@@ -1,11 +1,6 @@
-<<<<<<< HEAD
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Car, MapPin, Clock, CreditCard, FileText, X, ShieldCheck, Info } from 'lucide-react';
-=======
-import { useEffect, useState, useCallback } from 'react';
-import { Calendar, Car, MapPin, Clock, CreditCard, FileText } from 'lucide-react';
->>>>>>> refs/remotes/origin/main
 import { api } from '../../services/api';
 import Pagination from '../../components/Pagination';
 
@@ -49,32 +44,6 @@ export default function MyBookings() {
   }, [currentPage]);
 
   useEffect(() => {
-<<<<<<< HEAD
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const [bookingsRes, vehiclesRes] = await Promise.all([
-          api.get('/bookings/my-bookings'),
-          api.get('/vehicles')
-        ]);
-        
-        // Handle paginated data (Page objects) or direct arrays
-        const getArray = (res) => {
-          if (Array.isArray(res)) return res;
-          if (res && Array.isArray(res.content)) return res.content;
-          return [];
-        };
-        
-        setBookings(getArray(bookingsRes));
-        setVehicles(getArray(vehiclesRes));
-      } catch (error) {
-        console.error('Error fetching bookings:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-=======
->>>>>>> refs/remotes/origin/main
     fetchData();
   }, [fetchData]);
 
@@ -159,18 +128,12 @@ export default function MyBookings() {
               <div key={booking.bookingId} className="bg-white rounded-3xl border border-gray-100 p-6 hover:shadow-xl hover:shadow-gray-200/40 transition-all duration-300 group">
                 <div className="flex flex-col md:flex-row gap-8">
                   {/* Vehicle image */}
-<<<<<<< HEAD
                   <div className="w-full md:w-56 h-40 bg-gray-50 rounded-2xl overflow-hidden flex-shrink-0 relative">
-                    <img src={vehicle?.image} alt={vehicle?.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    <img src={getImageUrl(vehicle?.image)} alt={vehicle?.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     onError={e => { e.target.src = 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80&w=400'; }} />
                     <div className="absolute top-3 left-3">
                          {getStatusBadge(booking.status)}
                     </div>
-=======
-                  <div className="w-48 h-32 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
-                    <img src={getImageUrl(vehicle.image)} alt={vehicle.name} className="w-full h-full object-cover"
-                    onError={e => { e.target.style.display = 'none'; }} />
->>>>>>> refs/remotes/origin/main
                   </div>
 
                   {/* Booking info */}
@@ -243,7 +206,15 @@ export default function MyBookings() {
         )}
       </div>
 
-<<<<<<< HEAD
+      {/* Pagination */}
+      <div className="mt-8">
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={(page) => setCurrentPage(page)}
+        />
+      </div>
+
       {/* Detail Modal */}
       {selectedBooking && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -265,7 +236,7 @@ export default function MyBookings() {
                 {/* Vehicle Segment */}
                 <div className="flex gap-6 mb-8">
                     <div className="w-40 h-28 rounded-2xl overflow-hidden bg-gray-50 flex-shrink-0">
-                        <img src={selectedBooking.vehicle?.image} alt="Vehicle" className="w-full h-full object-cover" 
+                        <img src={getImageUrl(selectedBooking.vehicle?.image)} alt="Vehicle" className="w-full h-full object-cover" 
                         onError={e => { e.target.src = 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&q=80&w=400'; }} />
                     </div>
                     <div>
@@ -331,15 +302,6 @@ export default function MyBookings() {
           </div>
         </div>
       )}
-=======
-      <div className="mt-8">
-        <Pagination 
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={(page) => setCurrentPage(page)}
-        />
-      </div>
->>>>>>> refs/remotes/origin/main
     </div>
 
   );
