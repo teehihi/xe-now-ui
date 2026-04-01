@@ -1,6 +1,6 @@
 # XeNow UI - Frontend Web Application
 
-![XeNow Demo](public/images/hero-bg.webp)
+![XeNow Demo](public/images/logo.webp)
 
 ## 📌 Giới Thiệu
 XeNow là nền tảng quản lý và cho thuê xe hơi/xe máy trực tuyến tân tiến dành cho mô hình kinh doanh B2C/C2C. Giao diện được thiết kế hiện đại, mượt mà dựa trên React.
