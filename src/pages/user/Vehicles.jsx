@@ -399,10 +399,10 @@ const Vehicles = () => {
                           {vehicle.type}
                         </span>
                       </div>
-                      {vehicle.status !== 'available' && (
+                      {vehicle.status?.toLowerCase() !== 'available' && (
                         <div className="absolute top-3 right-3">
-                          <span className="px-3 py-1 bg-red-500/90 backdrop-blur-sm text-white text-xs font-medium rounded-full">
-                            {vehicle.status === 'rented' ? 'Đang thuê' : 'Bảo trì'}
+                          <span className={`px-3 py-1 bg-${vehicle.status?.toLowerCase() === 'rented' ? 'red' : 'orange'}-500/90 backdrop-blur-sm text-white text-xs font-medium rounded-full`}>
+                            {vehicle.status?.toLowerCase() === 'rented' ? 'Đang thuê' : 'Bảo trì'}
                           </span>
                         </div>
                       )}
@@ -463,7 +463,7 @@ const Vehicles = () => {
                         </div>
                         <button
                           onClick={() => navigate(`/vehicles/${vehicle.id}`)}
-                          disabled={vehicle.status !== 'available'}
+                          disabled={vehicle.status?.toLowerCase() !== 'available'}
                           className="px-4 py-2 bg-[#1B83A1] text-white rounded-lg hover:bg-[#1B83A1]/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Xem chi tiết

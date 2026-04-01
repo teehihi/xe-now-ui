@@ -157,14 +157,28 @@ export default function VehicleDetail() {
               )}
               <div className="absolute top-4 right-4">
                 <span className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
-                  vehicle.status?.toLowerCase() === 'available' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-gray-100 text-gray-700'
+                  vehicle.status?.toLowerCase() === 'available' ? 'bg-green-100 text-green-700 border border-green-200' : 
+                  vehicle.status?.toLowerCase() === 'maintenance' ? 'bg-orange-100 text-orange-700 border border-orange-200' :
+                  'bg-gray-100 text-gray-700'
                 }`}>
-                  {vehicle.status?.toLowerCase() === 'available' ? 'Sẵn sàng' : 'Đang thuê'}
+                  {vehicle.status?.toLowerCase() === 'available' ? 'Sẵn sàng' : 
+                   vehicle.status?.toLowerCase() === 'maintenance' ? 'Đang bảo trì' : 'Đang thuê'}
                 </span>
               </div>
             </div>
 
             <div className="p-8">
+              {vehicle.status?.toLowerCase() === 'maintenance' && (
+                <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6 flex items-start gap-3">
+                  <div className="p-2 bg-orange-100 rounded-lg text-orange-600">
+                    <Shield size={20} />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-orange-800">Phương tiện đang bảo trì định kỳ</h4>
+                    <p className="text-sm text-orange-700 mt-0.5">Xe này đã đạt ngưỡng giới hạn vận hành và đang được kiểm tra kỹ thuật để đảm bảo an toàn. Quý khách vui lòng chọn phương tiện khác.</p>
+                  </div>
+                </div>
+              )}
               <div className="flex items-start justify-between mb-6">
                 <div>
                   <h1 className="text-3xl font-bold text-gray-900">{vehicle.name}</h1>
@@ -272,7 +286,8 @@ export default function VehicleDetail() {
 
             <button onClick={handleBooking} disabled={vehicle.status?.toLowerCase() !== 'available'}
               className="w-full py-3 bg-gradient-to-r from-[#155DFC] to-[#1447E6] text-white rounded-xl font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">
-              {vehicle.status?.toLowerCase() === 'available' ? 'Đặt xe ngay' : 'Xe không khả dụng'}
+              {vehicle.status?.toLowerCase() === 'available' ? 'Đặt xe ngay' : 
+               vehicle.status?.toLowerCase() === 'maintenance' ? 'Xe đang bảo trì' : 'Xe không khả dụng'}
             </button>
 
             <div className="mt-6 space-y-3">
