@@ -18,17 +18,19 @@ export default function Models() {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [pageSize] = useState(10);
+  const [sortOrder, setSortOrder] = useState('asc');
+  const [initialLoad, setInitialLoad] = useState(true);
 
   useEffect(() => {
-    fetchData();
-  }, [currentPage]);
+    fetchData(initialLoad);
+  }, [currentPage, sortOrder]);
 
-  const fetchData = async () => {
+  const fetchData = async (isFirstLoad = false) => {
     try {
-      setLoading(true);
+      if (isFirstLoad) setLoading(true);
       setError(null);
       const [mData, bData] = await Promise.all([
-        api.get(`/admin/models?page=${currentPage}&size=${pageSize}`),
+        api.get(`/admin/models?page=${currentPage}&size=${pageSize}&sortDir=${sortOrder}`),
         api.get('/admin/brands?size=100')
       ]);
       setModels(Array.isArray(mData.content) ? mData.content : []);
@@ -36,13 +38,18 @@ export default function Models() {
       setBrands(Array.isArray(bData.content) ? bData.content : []);
     } catch (error) {
       console.error('Error fetching models:', error);
-      setError('Không thể tải danh sách mẫu xe. Vui lòng kiểm tra quyền hạn.');
+      if (error.isForbidden) {
+        setError('Bạn không có quyền truy cập module Mẫu xe.');
+      } else {
+        setError('Không thể tải danh sách mẫu xe.');
+      }
     } finally {
       setLoading(false);
+      setInitialLoad(false);
     }
   };
 
-  if (loading) return (
+  if (initialLoad && loading) return (
     <div className="flex justify-center py-20">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1B83A1]"></div>
     </div>
@@ -57,7 +64,7 @@ export default function Models() {
 
   const showToast = (msg) => {
     setToast(msg);
-    setTimeout(() => setToast(''), 3000);
+    setTimeout(() => setToast(''), 2000);
   };
 
   function openAdd() {
@@ -91,7 +98,7 @@ export default function Models() {
       fetchData();
       setShowModal(false);
     } catch (error) {
-      showToast('Lỗi khi lưu dữ liệu');
+      if (!error.isForbidden) showToast('Lỗi khi lưu dữ liệu');
     }
   }
 
@@ -102,7 +109,7 @@ export default function Models() {
       showToast('Đã xóa mẫu xe');
       fetchData();
     } catch (error) {
-      showToast('Lỗi khi xóa mẫu xe');
+      if (!error.isForbidden) showToast('Lỗi khi xóa mẫu xe');
     }
   }
 
@@ -122,14 +129,24 @@ export default function Models() {
         <table className="w-full text-sm">
           <thead className="sticky top-0 bg-white z-10 border-b border-gray-100">
             <tr className="bg-gray-50/50">
-              <th className="text-left px-8 py-4 text-gray-500 font-semibold">ID</th>
+              <th 
+                className="text-left px-8 py-4 text-gray-500 font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
+                onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+              >
+                ID <span className="text-[10px] text-gray-400 ml-1">{sortOrder === 'asc' ? '▲' : '▼'}</span>
+              </th>
               <th className="text-left px-8 py-4 text-gray-500 font-semibold">Mẫu xe</th>
               <th className="text-left px-8 py-4 text-gray-500 font-semibold">Hãng xe</th>
               <th className="text-right px-8 py-4 text-gray-500 font-semibold">Thao tác</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50">
-            {loading ? (
+          <tbody className="relative divide-y divide-gray-50">
+            {loading && !initialLoad && (
+              <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center z-20">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1B83A1]"></div>
+              </div>
+            )}
+            {models.length === 0 ? (
               <tr>
                 <td colSpan="4" className="py-12 text-center text-gray-400">Đang tải dữ liệu...</td>
               </tr>

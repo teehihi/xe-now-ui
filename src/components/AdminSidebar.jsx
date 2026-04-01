@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Car, CalendarCheck, Users, MapPin,
-  Wrench, BarChart2, ArrowLeft, Award, Activity
+  Wrench, BarChart2, ArrowLeft, Award, Activity, Shield, Key, UserCheck
 } from 'lucide-react';
 
 const navItems = [
@@ -16,6 +16,12 @@ const navItems = [
   { to: '/admin/reports', label: 'Báo cáo', icon: BarChart2 },
 ];
 
+const systemItems = [
+  { to: '/admin/roles', label: 'Vai trò', icon: Shield },
+  { to: '/admin/permissions', label: 'Phân quyền', icon: Key },
+  { to: '/admin/users', label: 'Người dùng', icon: UserCheck },
+];
+
 export default function AdminSidebar() {
   const navigate = useNavigate();
   return (
@@ -28,8 +34,29 @@ export default function AdminSidebar() {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-4 py-4 space-y-1">
+      <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto scrollbar-hide">
         {navItems.map(({ to, label, icon: Icon }) => (
+          <NavLink
+            key={to}
+            to={to}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-4 py-2.5 rounded-[10px] text-sm font-medium transition-colors ${isActive
+                ? 'bg-[#1B83A1] text-white'
+                : 'text-[#CAD5E2] hover:bg-white/10'
+              }`
+            }
+          >
+            <Icon size={20} />
+            {label}
+          </NavLink>
+        ))}
+
+        {/* System divider */}
+        <div className="pt-4 pb-2 px-4">
+          <p className="text-[10px] uppercase tracking-widest text-[#617699] font-bold">Hệ thống</p>
+        </div>
+
+        {systemItems.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}

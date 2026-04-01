@@ -27,6 +27,14 @@ import Brands from './pages/admin/Brands';
 import Models from './pages/admin/Models';
 import Maintenance from './pages/admin/Maintenance';
 import Reports from './pages/admin/Reports';
+import Roles from './pages/admin/Roles';
+import Permissions from './pages/admin/Permissions';
+import AdminUsers from './pages/admin/Users';
+
+// Error pages
+import NotFound from './pages/error/NotFound';
+import Forbidden from './pages/error/Forbidden';
+import Unauthorized from './pages/error/Unauthorized';
 
 function App() {
   return (
@@ -63,16 +71,16 @@ function App() {
             <Route path="models" element={<Models />} />
             <Route path="maintenance" element={<Maintenance />} />
             <Route path="reports" element={<Reports />} />
+            <Route path="roles" element={<Roles />} />
+            <Route path="permissions" element={<Permissions />} />
+            <Route path="users" element={<AdminUsers />} />
           </Route>
 
-          {/* 404 */}
-          <Route path="*" element={<div className="min-h-screen flex items-center justify-center">
-            <div className="text-center">
-              <h1 className="text-6xl font-bold text-gray-300 mb-4">404</h1>
-              <p className="text-gray-600 mb-4">Trang không tồn tại</p>
-              <a href="/" className="text-[#1B83A1] hover:underline">Quay về trang chủ</a>
-            </div>
-          </div>} />
+          {/* Error routes */}
+          <Route path="/401" element={<Unauthorized />} />
+          <Route path="/403" element={<Forbidden />} />
+          <Route path="/404" element={<NotFound />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

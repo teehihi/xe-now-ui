@@ -11,6 +11,13 @@ const THRESHOLDS = {
 export default function Maintenance() {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [toast, setToast] = useState('');
+
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(''), 2000);
+  };
 
   useEffect(() => {
     fetchVehicles();
@@ -24,6 +31,11 @@ export default function Maintenance() {
       setVehicles(res.content);
     } catch (error) {
       console.error('Error fetching vehicles:', error);
+      if (error.isForbidden) {
+        setError('Bạn không có quyền truy cập module Giám sát Bảo trì.');
+      } else {
+        setError('Không thể tải dữ liệu bảo trì.');
+      }
     } finally {
       setLoading(false);
     }
@@ -34,7 +46,7 @@ export default function Maintenance() {
       await api.post(`/admin/vehicles/${id}/maintenance/complete`);
       fetchVehicles();
     } catch (error) {
-      showToast('Lỗi: ' + error.message);
+      if (!error.isForbidden) showToast('Lỗi: ' + error.message);
     }
   };
 
@@ -55,6 +67,13 @@ export default function Maintenance() {
   if (loading) return (
     <div className="flex justify-center py-20">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1B83A1]"></div>
+    </div>
+  );
+
+  if (error) return (
+    <div className="max-w-4xl mx-auto mt-10 p-8 bg-red-50 border border-red-100 rounded-2xl text-center">
+      <p className="text-red-600 font-medium">{error}</p>
+      <button onClick={fetchVehicles} className="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg text-sm font-bold shadow-md hover:bg-red-700 transition-all">Thử lại</button>
     </div>
   );
 
@@ -194,6 +213,11 @@ export default function Maintenance() {
           </div>
         </div>
       </div>
+      {toast && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 bg-gray-900 text-white rounded-2xl text-sm font-medium shadow-2xl animate-in slide-in-from-bottom duration-300 z-[100]">
+          {toast}
+        </div>
+      )}
     </div>
   );
 }

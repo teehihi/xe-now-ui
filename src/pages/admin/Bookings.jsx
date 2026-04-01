@@ -44,6 +44,12 @@ export default function Bookings() {
   const [returnPaymentMethod, setReturnPaymentMethod] = useState('Tiền mặt');
 
   const [stats, setStats] = useState(null);
+  const [toast, setToast] = useState('');
+
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(''), 2000);
+  };
 
   const fetchBookings = useCallback(async () => {
     try {
@@ -57,9 +63,13 @@ export default function Bookings() {
       setTotalPages(res.totalPages || 0);
       setTotalElements(res.totalElements || 0);
       setStats(sRes);
-    } catch (error) {
-      console.error('Error fetching bookings:', error);
-      setError('Không thể tải danh sách đặt xe. Vui lòng kiểm tra quyền hạn của bạn.');
+    } catch (err) {
+      console.error('Error fetching bookings:', err);
+      if (err.isForbidden) {
+        setError('Bạn không có quyền truy cập module Đơn đặt xe.');
+      } else {
+        setError('Không thể tải danh sách đơn đặt xe.');
+      }
     } finally {
       setLoading(false);
     }
@@ -90,7 +100,7 @@ export default function Bookings() {
       setShowReturnModal(false);
       fetchBookings();
     } catch (error) {
-      showToast('Cập nhật thất bại: ' + error.message);
+      if (!error.isForbidden) showToast('Cập nhật thất bại: ' + error.message);
     }
   }
 
@@ -425,6 +435,12 @@ export default function Bookings() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {toast && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 bg-gray-900 text-white rounded-2xl text-sm font-medium shadow-2xl animate-in slide-in-from-bottom duration-300 z-[100]">
+          {toast}
         </div>
       )}
     </div>

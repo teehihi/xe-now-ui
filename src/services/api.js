@@ -3,11 +3,11 @@ const BASE_URL = 'http://localhost:8080/api';
 const getHeaders = (isFormData = false) => {
   const token = localStorage.getItem('token');
   const headers = {};
-  
+
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
-  
+
   if (!isFormData) {
     headers['Content-Type'] = 'application/json';
   }
@@ -17,7 +17,7 @@ const getHeaders = (isFormData = false) => {
 const handleResponse = async (response) => {
   const contentType = response.headers.get('content-type');
   let result;
-  
+
   try {
     if (contentType && contentType.includes('application/json')) {
       result = await response.json();
@@ -34,6 +34,28 @@ const handleResponse = async (response) => {
       window.location.href = '/login?error=session_expired';
       throw new Error('Phiên đăng nhập hết hạn, vui lòng đăng nhập lại.');
     }
+    if (response.status === 403) {
+      // Dispatch global event for 403 forbidden — ForbiddenToast handles the notification
+      window.dispatchEvent(new CustomEvent('api-forbidden', {
+        detail: { message: result?.message || 'Bạn không có quyền thao tác này' }
+      }));
+      // Mark error so page-level catch blocks can suppress their own error display
+      const err = new Error(result?.message || 'Bạn không có quyền thao tác này');
+      err.isForbidden = true;
+      throw err;
+    }
+
+    // Handle database reference/constraint errors (usually 400 or 409)
+    const msg = (result?.message || '');
+    if (response.status === 400 || response.status === 409 || response.status === 500) {
+      if (msg.toLowerCase().includes('foreign key') || msg.toLowerCase().includes('reference') || msg.toLowerCase().includes('ràng buộc')) {
+        const constraintMsg = msg.toLowerCase().includes('foreign key') ? 'Dữ liệu này đang được sử dụng ở nơi khác nên không thể xoá.' : msg;
+        const constraintErr = new Error(constraintMsg);
+        constraintErr.isConstraintViolation = true;
+        throw constraintErr;
+      }
+    }
+
     throw new Error(result?.message || `Lỗi: ${response.statusText}`);
   }
 
@@ -66,11 +88,11 @@ const handleRefreshToken = async () => {
     });
 
     if (!response.ok) throw new Error('Session expired');
-    
+
     const result = await response.json();
     const data = result.data || result;
     const newToken = data.token;
-    
+
     if (newToken) {
       localStorage.setItem('token', newToken);
       return newToken;
@@ -81,8 +103,8 @@ const handleRefreshToken = async () => {
     localStorage.removeItem('user');
     // Save current path to redirect back after login if needed
     const currentPath = window.location.pathname;
-    if (currentPath !== '/login' && !currentPath.includes('/login')) {
-      window.location.href = `/login?error=session_expired&redirect=${encodeURIComponent(currentPath)}`;
+    if (currentPath !== '/login' && !currentPath.includes('/login') && currentPath !== '/401') {
+      window.location.href = `/401?redirect=${encodeURIComponent(currentPath)}`;
     }
     return null;
   }
@@ -91,7 +113,7 @@ const handleRefreshToken = async () => {
 export const api = {
   request: async (endpoint, options = {}) => {
     const { isFormData, ...fetchOptions } = options;
-    
+
     const requestOptions = {
       ...fetchOptions,
       headers: {
@@ -109,7 +131,7 @@ export const api = {
         isRefreshing = true;
         const newToken = await handleRefreshToken();
         isRefreshing = false;
-        
+
         if (newToken) {
           onRefreshed(newToken);
         }
@@ -127,12 +149,12 @@ export const api = {
     }
 
     if (response.status === 204) return null;
-    
+
     return handleResponse(response);
   },
 
   get: (endpoint) => api.request(endpoint, { method: 'GET' }),
-  
+
   post: (endpoint, data) => {
     const isFormData = data instanceof FormData;
     return api.request(endpoint, {

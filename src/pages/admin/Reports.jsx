@@ -9,18 +9,25 @@ import { TrendingUp, CalendarCheck, BarChart2, Download } from 'lucide-react';
 export default function Reports() {
   const [data, setData] = useState({ bookings: [], vehicles: [] });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [bRes, vRes] = await Promise.all([
-          api.get('/admin/bookings?size=1000'),
-          api.get('/admin/vehicles?size=1000')
-        ]);
-        setData({ bookings: bRes.content, vehicles: vRes.content });
-      } catch (error) {
-        console.error('Error fetching record for reports:', error);
+        setError(null);
+        const res = await api.get('/admin/reports');
+        setData({
+          bookings: res.bookings || [],
+          vehicles: res.vehicles || []
+        });
+      } catch (err) {
+        console.error('Error fetching report data:', err);
+        if (err.isForbidden) {
+          setError('Bạn không có quyền truy cập vào báo cáo hệ thống.');
+        } else {
+          setError('Không thể tải dữ liệu báo cáo.');
+        }
       } finally {
         setLoading(false);
       }
@@ -31,6 +38,12 @@ export default function Reports() {
   if (loading) return (
     <div className="flex justify-center py-20">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1B83A1]"></div>
+    </div>
+  );
+  if (error) return (
+    <div className="max-w-4xl mx-auto mt-10 p-8 bg-red-50 border border-red-100 rounded-2xl text-center">
+      <p className="text-red-600 font-medium">{error}</p>
+      <button onClick={() => window.location.reload()} className="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg text-sm font-bold shadow-md hover:bg-red-700 transition-all">Thử lại</button>
     </div>
   );
 

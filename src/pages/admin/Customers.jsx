@@ -8,6 +8,7 @@ const emptyForm = { name: '', email: '', phone: '', idCard: '', licenseExpiry: '
 export default function Customers() {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -18,23 +19,29 @@ export default function Customers() {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
+  const [sortOrder, setSortOrder] = useState('asc');
   const pageSize = 10;
 
   const fetchCustomers = useCallback(async () => {
     try {
-      setLoading(true);
+      if (initialLoad) setLoading(true);
       setError(null);
-      const res = await api.get(`/admin/customers?page=${currentPage}&size=${pageSize}`);
+      const res = await api.get(`/admin/customers?page=${currentPage}&size=${pageSize}&sortDir=${sortOrder}`);
       setCustomers(Array.isArray(res.content) ? res.content : []);
       setTotalPages(res.totalPages || 0);
       setTotalElements(res.totalElements || 0);
-    } catch (error) {
-      console.error('Error fetching customers:', error);
-      setError('Không thể tải danh sách khách hàng. Vui lòng kiểm tra quyền hạn.');
+    } catch (err) {
+      console.error('Error fetching customers:', err);
+      if (err.isForbidden) {
+        setError('Bạn không có quyền truy cập module Khách hàng.');
+      } else {
+        setError('Không thể tải danh sách khách hàng.');
+      }
     } finally {
       setLoading(false);
+      setInitialLoad(false);
     }
-  }, [currentPage]);
+  }, [currentPage, sortOrder, initialLoad]);
 
   useEffect(() => {
     fetchCustomers();
@@ -46,7 +53,7 @@ export default function Customers() {
     (c.email || '').includes(search) || (c.phone || '').includes(search)
   );
 
-  if (loading) return (
+  if (initialLoad && loading) return (
     <div className="flex justify-center py-20">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1B83A1]"></div>
     </div>
@@ -104,12 +111,23 @@ export default function Customers() {
       </div>
 
       {/* Table */}
-      <div className="flex-1 min-h-0 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+      <div className="flex-1 min-h-0 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col relative">
+        {loading && !initialLoad && (
+          <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center z-10">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1B83A1]"></div>
+          </div>
+        )}
         <div className="flex-1 overflow-auto">
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-white z-10 border-b border-gray-100">
               <tr>
-                <th className="text-left px-4 py-3 text-gray-500 font-medium">ID</th>
+                <th 
+                  className="text-left px-4 py-3 text-gray-500 font-medium cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                  title="Nhấn để sắp xếp"
+                >
+                  ID <span className="text-[10px] text-gray-400 ml-1">{sortOrder === 'asc' ? '▲' : '▼'}</span>
+                </th>
                 <th className="text-left px-4 py-3 text-gray-500 font-medium">Họ và tên</th>
                 <th className="text-left px-4 py-3 text-gray-500 font-medium">Email</th>
                 <th className="text-left px-4 py-3 text-gray-500 font-medium">Số điện thoại</th>

@@ -34,7 +34,7 @@ export default function Dashboard() {
         setStats(res);
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);
-        setError('Bạn không có quyền truy cập dữ liệu này hoặc phiên làm việc đã hết hạn.');
+        if (!error.isForbidden) setError('Bạn không có quyền truy cập dữ liệu này hoặc phiên làm việc đã hết hạn.');
       } finally {
         setLoading(false);
       }

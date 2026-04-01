@@ -19,6 +19,7 @@ export default function Vehicles() {
   const [locations, setLocations] = useState([]);
   const [models, setModels] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('Tất cả trạng thái');
@@ -30,9 +31,7 @@ export default function Vehicles() {
   const [toast, setToast] = useState('');
   const [imageKey, setImageKey] = useState(0);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+
 
   useEffect(() => {
     const editIdParam = searchParams.get('edit');
@@ -45,14 +44,19 @@ export default function Vehicles() {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
+  const [sortOrder, setSortOrder] = useState('asc');
   const pageSize = 10;
+  
+  useEffect(() => {
+    fetchData(initialLoad);
+  }, [currentPage, sortOrder]);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (isFirstLoad = false) => {
     try {
-      setLoading(true);
+      if (isFirstLoad) setLoading(true);
       setError(null);
       const [vRes, lRes, mRes] = await Promise.all([
-        api.get(`/admin/vehicles?page=${currentPage}&size=${pageSize}`),
+        api.get(`/admin/vehicles?page=${currentPage}&size=${pageSize}&sortDir=${sortOrder}`),
         api.get('/admin/locations?size=1000'),
         api.get('/admin/models?size=1000')
       ]);
@@ -64,24 +68,27 @@ export default function Vehicles() {
       setModels(mRes.content ?? []);
     } catch (error) {
       console.error('Error fetching data:', error);
-      setError('Không thể tải dữ liệu xe. Vui lòng kiểm tra quyền truy cập của bạn.');
+      if (error.isForbidden) {
+        setError('Bạn không có quyền xem danh sách xe.');
+      } else {
+        setError('Không thể tải dữ liệu xe. Vui lòng thử lại sau.');
+      }
     } finally {
       setLoading(false);
+      setInitialLoad(false);
     }
-  }, [currentPage]);
+  }, [currentPage, sortOrder, initialLoad]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+
 
   const filtered = (vehicles || []).filter(v => {
     const matchSearch = String(v.modelName || v.name || '').toLowerCase().includes(search.toLowerCase()) ||
-                       String(v.licensePlate || '').toLowerCase().includes(search.toLowerCase());
+      String(v.licensePlate || '').toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'Tất cả trạng thái' || v.status === statusFilter;
     return matchSearch && matchStatus;
   });
 
-  if (loading) return (
+  if (initialLoad && loading) return (
     <div className="flex justify-center py-20">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1B83A1]"></div>
     </div>
@@ -154,8 +161,7 @@ export default function Vehicles() {
       fetchData();
       setShowModal(false);
     } catch (error) {
-      const msg = error.message || 'Lỗi khi lưu dữ liệu';
-      showToast(msg);
+      if (!error.isForbidden) showToast(error.message || 'Lỗi khi lưu dữ liệu');
     }
   }
 
@@ -166,7 +172,7 @@ export default function Vehicles() {
       showToast('Đã xóa xe');
       fetchData();
     } catch (error) {
-      showToast('Lỗi khi xóa xe');
+      if (!error.isForbidden) showToast('Lỗi khi xóa xe');
     }
   }
 
@@ -175,8 +181,8 @@ export default function Vehicles() {
     if (!files || files.length === 0) return;
 
     if (editId) {
-        handleFileUpload(files);
-        return;
+      handleFileUpload(files);
+      return;
     }
 
     setPendingFiles(prev => [...prev, ...files]);
@@ -202,7 +208,7 @@ export default function Vehicles() {
       }
       fetchData();
     } catch (error) {
-      showToast('Lỗi khi tải ảnh');
+      if (!error.isForbidden) showToast('Lỗi khi tải ảnh');
     }
   }
 
@@ -225,7 +231,7 @@ export default function Vehicles() {
       setForm(prev => ({ ...prev, images: updatedImages }));
       showToast('Đã xóa ảnh');
     } catch (error) {
-      showToast('Lỗi khi xóa ảnh');
+      if (!error.isForbidden) showToast('Lỗi khi xóa ảnh');
     }
   }
 
@@ -238,16 +244,16 @@ export default function Vehicles() {
       }));
       setForm(prev => ({ ...prev, images: updatedImages }));
       showToast('Đã đặt làm ảnh chính');
-      fetchData(); 
+      fetchData();
     } catch (error) {
-      showToast('Lỗi khi đặt ảnh chính');
+      if (!error.isForbidden) showToast('Lỗi khi đặt ảnh chính');
     }
   }
 
   function showToast(msg) {
     setToast(msg);
-    setTimeout(() => setToast(''), 3000);
-  }
+    setTimeout(() => setToast(''), 2000);
+  };
 
   const getImgUrl = (url) => {
     if (!url) return '/images/car-toyota-camry.webp';
@@ -275,27 +281,38 @@ export default function Vehicles() {
             />
           </div>
           <div className="w-48">
-            <CustomSelect 
-                options={statusOptions.map(o => ({ id: o, name: o === 'Tất cả trạng thái' ? o : statusLabel[o] ?? o }))}
-                value={statusFilter}
-                onChange={v => setStatusFilter(v)}
-                placeholder="Chọn trạng thái"
+            <CustomSelect
+              options={statusOptions.map(o => ({ id: o, name: o === 'Tất cả trạng thái' ? o : statusLabel[o] ?? o }))}
+              value={statusFilter}
+              onChange={v => setStatusFilter(v)}
+              placeholder="Chọn trạng thái"
             />
           </div>
           <span className="text-sm text-gray-500 ml-auto">{totalElements} xe</span>
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-auto">
+      <div className="flex-1 min-h-0 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-auto relative">
+        {loading && !initialLoad && (
+          <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center z-10">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1B83A1]"></div>
+          </div>
+        )}
         <table className="w-full text-sm">
           <thead className="sticky top-0 bg-white z-10 border-b border-gray-100">
             <tr>
               <th className="text-left px-4 py-3 text-gray-500 font-medium">Ảnh</th>
-              <th className="text-left px-4 py-3 text-gray-500 font-medium">Biển số</th>
+              <th className="text-left px-4 py-3 text-gray-500 font-medium whitespace-nowrap">Biển số</th>
               <th className="text-left px-4 py-3 text-gray-500 font-medium">Tên xe</th>
               <th className="text-left px-4 py-3 text-gray-500 font-medium">Loại</th>
               <th className="text-left px-4 py-3 text-gray-500 font-medium">Vị trí</th>
-              <th className="text-left px-4 py-3 text-gray-500 font-medium">Giá/ngày</th>
+              <th 
+                className="text-left px-4 py-3 text-gray-500 font-medium cursor-pointer hover:bg-gray-100 transition-colors whitespace-nowrap"
+                onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                title="Sắp xếp theo giá thuê"
+              >
+                Giá thuê {sortOrder === 'asc' ? '▲' : '▼'}
+              </th>
               <th className="text-left px-4 py-3 text-gray-500 font-medium">Trạng thái</th>
               <th className="text-right px-4 py-3 text-gray-500 font-medium">Thao tác</th>
             </tr>
@@ -331,9 +348,9 @@ export default function Vehicles() {
 
       <div className="shrink-0 pt-2 pb-2">
         <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={(page) => setCurrentPage(page)}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={(page) => setCurrentPage(page)}
         />
       </div>
 
@@ -347,15 +364,15 @@ export default function Vehicles() {
 
             <div className="p-8 space-y-6">
               <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                <CustomSelect 
-                    label="Mẫu xe (Model)"
-                    options={models.map(m => ({ id: m.modelId, name: m.modelName, brand: m.brandName }))}
-                    value={form.modelId || ''}
-                    onChange={v => setForm(f => ({ ...f, modelId: v }))}
-                    placeholder="Chọn mẫu xe"
-                    getLabel={opt => `${opt.brand ? opt.brand + ' - ' : ''}${opt.name}`}
+                <CustomSelect
+                  label="Mẫu xe (Model)"
+                  options={models.map(m => ({ id: m.modelId, name: m.modelName, brand: m.brandName }))}
+                  value={form.modelId || ''}
+                  onChange={v => setForm(f => ({ ...f, modelId: v }))}
+                  placeholder="Chọn mẫu xe"
+                  getLabel={opt => `${opt.brand ? opt.brand + ' - ' : ''}${opt.name}`}
                 />
-                
+
                 <div className="space-y-1">
                   <label className="block text-sm font-medium text-gray-700">Biển số xe</label>
                   <input
@@ -375,12 +392,12 @@ export default function Vehicles() {
                   />
                 </div>
 
-                <CustomSelect 
-                    label="Loại xe"
-                    options={vehicleTypes.map(t => ({ id: t, name: t }))}
-                    value={form.type || ''}
-                    onChange={v => setForm(f => ({ ...f, type: v }))}
-                    placeholder="Chọn loại xe"
+                <CustomSelect
+                  label="Loại xe"
+                  options={vehicleTypes.map(t => ({ id: t, name: t }))}
+                  value={form.type || ''}
+                  onChange={v => setForm(f => ({ ...f, type: v }))}
+                  placeholder="Chọn loại xe"
                 />
 
                 <div className="space-y-1">
@@ -422,12 +439,12 @@ export default function Vehicles() {
                   />
                 </div>
 
-                <CustomSelect 
-                    label="Vị trí/Chi nhánh"
-                    options={locations.map(l => ({ id: l.locationId, name: l.branchName }))}
-                    value={form.locationId || ''}
-                    onChange={v => setForm(f => ({ ...f, locationId: Number(v) }))}
-                    placeholder="Chọn chi nhánh"
+                <CustomSelect
+                  label="Vị trí/Chi nhánh"
+                  options={locations.map(l => ({ id: l.locationId, name: l.branchName }))}
+                  value={form.locationId || ''}
+                  onChange={v => setForm(f => ({ ...f, locationId: Number(v) }))}
+                  placeholder="Chọn chi nhánh"
                 />
 
                 <div className="space-y-1">
@@ -445,12 +462,12 @@ export default function Vehicles() {
               <div className="space-y-4">
                 <label className="block text-sm font-medium text-gray-700">Hình ảnh xe</label>
                 <div className="relative border-2 border-dashed border-gray-200 rounded-2xl py-10 transition-all hover:border-blue-400 hover:bg-blue-50/30">
-                  <input 
-                    type="file" 
-                    multiple 
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
-                    onChange={handleFileSelect} 
-                    accept="image/*" 
+                  <input
+                    type="file"
+                    multiple
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    onChange={handleFileSelect}
+                    accept="image/*"
                   />
                   <div className="flex flex-col items-center pointer-events-none">
                     <Upload size={24} className="text-gray-400" />
@@ -459,27 +476,27 @@ export default function Vehicles() {
                 </div>
 
                 <div className="flex flex-wrap gap-4">
-                    {previewUrls.map((url, idx) => (
-                        <div key={`pending-${idx}`} className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-blue-200">
-                             <img src={url} alt="" className="w-full h-full object-cover" />
-                             <button onClick={() => removePendingImage(idx)} className="absolute top-1 right-1 p-1 bg-white/80 rounded-full text-red-500 hover:bg-red-50 transition-colors">
-                                <X size={12} />
-                             </button>
-                             <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
-                        </div>
-                    ))}
+                  {previewUrls.map((url, idx) => (
+                    <div key={`pending-${idx}`} className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-blue-200">
+                      <img src={url} alt="" className="w-full h-full object-cover" />
+                      <button onClick={() => removePendingImage(idx)} className="absolute top-1 right-1 p-1 bg-white/80 rounded-full text-red-500 hover:bg-red-50 transition-colors">
+                        <X size={12} />
+                      </button>
+                      <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
+                    </div>
+                  ))}
 
-                    {form.images && form.images.map(img => (
-                      <div key={img.imageId} className="group relative w-24 h-24 rounded-xl overflow-hidden border border-gray-100">
-                        <img src={getImgUrl(img.imageUrl)} alt="" className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
-                          <button onClick={() => handleSetPrimary(img.imageId)} title="Đặt làm ảnh chính" className={`p-1 rounded ${img.isPrimary ? 'bg-blue-500 text-white' : 'bg-white'}`}>
-                             {img.isPrimary ? '★' : '☆'}
-                          </button>
-                          <button onClick={() => handleDeleteImage(img.imageId)} title="Xóa ảnh" className="p-1 bg-white text-red-500 rounded"><Trash2 size={12} /></button>
-                        </div>
+                  {form.images && form.images.map(img => (
+                    <div key={img.imageId} className="group relative w-24 h-24 rounded-xl overflow-hidden border border-gray-100">
+                      <img src={getImgUrl(img.imageUrl)} alt="" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                        <button onClick={() => handleSetPrimary(img.imageId)} title="Đặt làm ảnh chính" className={`p-1 rounded ${img.isPrimary ? 'bg-blue-500 text-white' : 'bg-white'}`}>
+                          {img.isPrimary ? '★' : '☆'}
+                        </button>
+                        <button onClick={() => handleDeleteImage(img.imageId)} title="Xóa ảnh" className="p-1 bg-white text-red-500 rounded"><Trash2 size={12} /></button>
                       </div>
-                    ))}
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -495,7 +512,7 @@ export default function Vehicles() {
       )}
 
       {toast && (
-        <div className="fixed bottom-6 right-6 bg-gray-900 text-white rounded-xl px-6 py-3 text-sm z-50">
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 bg-gray-900 text-white rounded-2xl text-sm font-medium shadow-2xl animate-in slide-in-from-bottom duration-300 z-[100]">
           {toast}
         </div>
       )}

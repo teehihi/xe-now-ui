@@ -30,7 +30,7 @@ export default function VehicleDetail() {
 
   const showToast = (msg) => {
     setToast(msg);
-    setTimeout(() => setToast(''), 3000);
+    setTimeout(() => setToast(''), 2000);
   };
 
   const getImgUrl = (url) => {
@@ -251,10 +251,8 @@ export default function VehicleDetail() {
         </div>
       </div>
 
-      {/* Toast */}
       {toast && (
-        <div className="fixed bottom-6 right-6 bg-white border border-gray-200 shadow-2xl rounded-2xl px-6 py-4 text-sm font-bold text-gray-800 z-50 animate-in slide-in-from-bottom flex items-center gap-3">
-          <div className="w-2 h-2 bg-red-500 rounded-full" />
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 bg-gray-900 text-white rounded-2xl text-sm font-medium shadow-2xl animate-in slide-in-from-bottom duration-300 z-[100]">
           {toast}
         </div>
       )}

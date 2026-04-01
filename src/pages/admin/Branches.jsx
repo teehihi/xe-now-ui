@@ -18,27 +18,34 @@ export default function Branches() {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [pageSize] = useState(4);
+  const [sortOrder, setSortOrder] = useState('asc');
+  const [initialLoad, setInitialLoad] = useState(true);
 
   useEffect(() => {
-    fetchLocations();
-  }, [currentPage]);
+    fetchLocations(initialLoad);
+  }, [currentPage, sortOrder]);
 
-  const fetchLocations = async () => {
+  const fetchLocations = async (isFirstLoad = false) => {
     try {
-      setLoading(true);
+      if (isFirstLoad) setLoading(true);
       setError(null);
-      const res = await api.get(`/admin/locations?page=${currentPage}&size=${pageSize}`);
+      const res = await api.get(`/admin/locations?page=${currentPage}&size=${pageSize}&sortDir=${sortOrder}`);
       setLocations(Array.isArray(res.content) ? res.content : []);
       setTotalPages(res.totalPages || 0);
-    } catch (error) {
-      console.error('Error fetching locations:', error);
-      setError('Không thể tải danh sách chi nhánh. Vui lòng kiểm tra quyền hạn.');
+    } catch (err) {
+      console.error('Error fetching branches:', err);
+      if (err.isForbidden) {
+        setError('Bạn không có quyền truy cập module Chi nhánh.');
+      } else {
+        setError('Không thể tải danh sách chi nhánh.');
+      }
     } finally {
       setLoading(false);
+      setInitialLoad(false);
     }
   };
 
-  if (loading) return (
+  if (initialLoad && loading) return (
     <div className="flex justify-center py-20">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1B83A1]"></div>
     </div>
@@ -78,7 +85,7 @@ export default function Branches() {
       setShowModal(false);
       fetchLocations();
     } catch (error) {
-      setToast('Lỗi khi lưu chi nhánh: ' + (error.response?.data?.message || error.message));
+      if (!error.isForbidden) setToast('Lỗi khi lưu chi nhánh: ' + (error.response?.data?.message || error.message));
     } finally {
       setSaving(false);
     }
@@ -90,7 +97,7 @@ export default function Branches() {
       await api.delete(`/admin/locations/${id}`);
       fetchLocations();
     } catch (error) {
-      setToast('Lỗi khi xóa: ' + (error.response?.data?.message || error.message));
+      if (!error.isForbidden) setToast('Lỗi khi xóa: ' + (error.response?.data?.message || error.message));
     }
   }
 
@@ -100,7 +107,14 @@ export default function Branches() {
       <div className="shrink-0 flex items-center justify-between">
         <h2 className="text-2xl font-black text-gray-900">Hệ thống Chi nhánh</h2>
         <div className="flex gap-2">
-          <button onClick={fetchLocations} className="p-2 text-gray-400 hover:text-[#1B83A1] transition-colors">
+          <button 
+            onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-100 rounded-xl text-sm font-bold hover:bg-gray-50 transition-all shadow-sm"
+            title="Sắp xếp theo ID"
+          >
+            ID {sortOrder === 'asc' ? '▲' : '▼'}
+          </button>
+          <button onClick={() => fetchLocations(false)} className="p-2 text-gray-400 hover:text-[#1B83A1] transition-colors">
             <RefreshCcw size={20} />
           </button>
           <button onClick={openAdd} className="flex items-center gap-2 px-6 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-bold hover:bg-gray-800 transition-all active:scale-95 shadow-lg shadow-gray-200">
@@ -110,10 +124,16 @@ export default function Branches() {
       </div>
 
       {/* Grid List */}
-      <div className="flex-1 min-h-0 flex flex-col">
-        {loading ? (
-          <div className="flex-1 flex justify-center py-20">
+      <div className="flex-1 min-h-0 flex flex-col relative">
+        {loading && !initialLoad && (
+          <div className="absolute inset-0 bg-white/30 backdrop-blur-[1px] flex items-center justify-center z-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1B83A1]"></div>
+          </div>
+        )}
+        {locations.length === 0 && !loading ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
+             <Building2 size={48} className="mb-2 opacity-20" />
+             <p>Không có chi nhánh nào</p>
           </div>
         ) : (
           <>

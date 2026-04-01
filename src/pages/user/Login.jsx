@@ -18,29 +18,30 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // api.js handleResponse already unwraps ApiResponse → result = data object
       const result = await api.post('/auth/login', {
         username: form.email,
         password: form.password
       });
 
-      if (result.success || result.token) {
-        // Adjust for different possible response structures
-        const userData = result.data?.user || result.user;
-        const tokenData = result.data?.token || result.token;
-        
+      const userData = result.user;
+      const tokenData = result.token;
+
+      if (userData && tokenData) {
         login(userData, tokenData);
         
-        if (userData?.role === 'ADMIN') {
+        // Redirect based on backend-determined admin access
+        if (userData.hasAdminAccess) {
           navigate('/admin');
         } else {
           navigate('/');
         }
       } else {
-        showToast(result.message || 'Đăng nhập thất bại');
+        showToast('Số điện thoại hoặc mật khẩu không chính xác');
       }
     } catch (error) {
       console.error('Login error:', error);
-      showToast(error.response?.data?.message || 'Lỗi kết nối đến server');
+      showToast(error.message || 'Sai tài khoản hoặc mật khẩu');
     }
   };
 

@@ -17,27 +17,34 @@ export default function Brands() {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [pageSize] = useState(8);
+  const [sortOrder, setSortOrder] = useState('asc');
+  const [initialLoad, setInitialLoad] = useState(true);
 
   useEffect(() => {
-    fetchBrands();
-  }, [currentPage]);
+    fetchBrands(initialLoad);
+  }, [currentPage, sortOrder]);
 
-  const fetchBrands = async () => {
+  const fetchBrands = async (isFirstLoad = false) => {
     try {
-      setLoading(true);
+      if (isFirstLoad) setLoading(true);
       setError(null);
-      const res = await api.get(`/admin/brands?page=${currentPage}&size=${pageSize}`);
+      const res = await api.get(`/admin/brands?page=${currentPage}&size=${pageSize}&sortDir=${sortOrder}`);
       setBrands(Array.isArray(res.content) ? res.content : []);
       setTotalPages(res.totalPages || 0);
     } catch (error) {
       console.error('Error fetching brands:', error);
-      setError('Không thể tải danh sách hãng xe. Vui lòng kiểm tra quyền hạn.');
+      if (error.isForbidden) {
+        setError('Bạn không có quyền truy cập module Hãng xe.');
+      } else {
+        setError('Không thể tải danh sách hãng xe.');
+      }
     } finally {
       setLoading(false);
+      setInitialLoad(false);
     }
   };
 
-  if (loading) return (
+  if (initialLoad && loading) return (
     <div className="flex justify-center py-20">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1B83A1]"></div>
     </div>
@@ -52,7 +59,7 @@ export default function Brands() {
 
   const showToast = (msg) => {
     setToast(msg);
-    setTimeout(() => setToast(''), 3000);
+    setTimeout(() => setToast(''), 2000);
   };
 
   function openAdd() {
@@ -81,7 +88,7 @@ export default function Brands() {
       fetchBrands();
       setShowModal(false);
     } catch (error) {
-      showToast('Lỗi khi lưu dữ liệu');
+      if (!error.isForbidden) showToast('Lỗi khi lưu dữ liệu');
     }
   }
 
@@ -92,7 +99,7 @@ export default function Brands() {
       showToast('Đã xóa hãng xe');
       fetchBrands();
     } catch (error) {
-      showToast('Lỗi khi xóa hãng');
+      if (!error.isForbidden) showToast('Lỗi khi xóa hãng');
     }
   }
 
@@ -103,15 +110,30 @@ export default function Brands() {
           <h1 className="text-2xl font-bold text-gray-900">Quản lý hãng xe</h1>
           <p className="text-sm text-gray-500">Quản lý danh mục các thương hiệu xe trong hệ thống</p>
         </div>
-        <button onClick={openAdd} className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-xl text-sm font-medium hover:bg-gray-800 transition-all shadow-sm">
-          <Plus size={18} /> Thêm hãng xe
-        </button>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-100 rounded-xl text-sm font-medium hover:bg-gray-50 transition-all shadow-sm"
+            title="Sắp xếp theo ID"
+          >
+            ID {sortOrder === 'asc' ? '▲' : '▼'}
+          </button>
+          <button onClick={openAdd} className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-xl text-sm font-medium hover:bg-gray-800 transition-all shadow-sm">
+            <Plus size={18} /> Thêm hãng xe
+          </button>
+        </div>
       </div>
 
-      <div className="flex-1 min-h-0 flex flex-col">
-        {loading ? (
-          <div className="flex-1 flex justify-center py-20">
+      <div className="flex-1 min-h-0 flex flex-col relative">
+        {loading && !initialLoad && (
+          <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center z-20">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-900"></div>
+          </div>
+        )}
+        {brands.length === 0 && !loading ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
+            <Award size={48} className="mb-2 opacity-20" />
+            <p>Không có hãng xe nào</p>
           </div>
         ) : (
           <>

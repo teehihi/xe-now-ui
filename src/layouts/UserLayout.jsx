@@ -62,7 +62,7 @@ export default function UserLayout() {
                   style={{ height: 36 }}>
                   <User size={16} /> {user.name || user.fullName || 'Tài khoản'}
                 </NavLink>
-                {(user.role?.toUpperCase()?.includes('ADMIN')) && (
+                {user.hasAdminAccess && (
                   <button onClick={() => navigate('/admin')}
                     className="flex items-center px-4 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-orange-500 to-red-500 ml-1 shadow-sm hover:scale-105 transition-all"
                     style={{ height: 32 }}>
