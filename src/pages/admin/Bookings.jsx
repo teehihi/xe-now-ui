@@ -41,6 +41,7 @@ export default function Bookings() {
   // Return form state
   const [mileage, setMileage] = useState('');
   const [note, setNote] = useState('');
+  const [returnPaymentMethod, setReturnPaymentMethod] = useState('Tiền mặt');
 
   const [stats, setStats] = useState(null);
 
@@ -83,6 +84,7 @@ export default function Bookings() {
       let url = `/admin/bookings/${id}/status?status=${status}`;
       if (extra.mileage) url += `&mileage=${extra.mileage}`;
       if (extra.note) url += `&note=${encodeURIComponent(extra.note)}`;
+      if (extra.returnPaymentMethod) url += `&returnPaymentMethod=${encodeURIComponent(extra.returnPaymentMethod)}`;
 
       await api.post(url);
       setShowReturnModal(false);
@@ -307,6 +309,19 @@ export default function Bookings() {
                   className="w-full px-5 py-4 bg-gray-50 rounded-2xl border-0 focus:ring-2 focus:ring-[#1B83A1] text-sm resize-none h-24 transition-all"
                 />
               </div>
+              
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase mb-2 ml-1">Hình thức thanh toán phí còn lại</label>
+                <select
+                  value={returnPaymentMethod}
+                  onChange={e => setReturnPaymentMethod(e.target.value)}
+                  className="w-full px-5 py-3 bg-gray-50 rounded-2xl border-0 focus:ring-2 focus:ring-[#1B83A1] font-bold text-sm transition-all"
+                >
+                  <option value="Tiền mặt">Tiền mặt</option>
+                  <option value="Chuyển khoản">Chuyển khoản</option>
+                  <option value="Thẻ tín dụng">Thẻ tín dụng / Máy POS</option>
+                </select>
+              </div>
             </div>
 
             <div className="flex gap-3 mt-8">
@@ -317,7 +332,7 @@ export default function Bookings() {
                 Hủy bỏ
               </button>
               <button
-                onClick={() => handleUpdateStatus(selectedBooking.bookingId, 'Completed', { mileage, note })}
+                onClick={() => handleUpdateStatus(selectedBooking.bookingId, 'Completed', { mileage, note, returnPaymentMethod })}
                 className="flex-1 py-3 bg-[#1B83A1] text-white rounded-2xl font-bold text-sm shadow-xl shadow-cyan-100 hover:bg-[#156a82] transition-all"
               >
                 Xác nhận

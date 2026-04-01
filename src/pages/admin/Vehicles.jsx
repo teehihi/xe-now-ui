@@ -21,6 +21,14 @@ export default function Vehicles() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('Tất cả trạng thái');
+  const [form, setForm] = useState(emptyForm);
+  const [editId, setEditId] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState([]);
+  const [previewUrls, setPreviewUrls] = useState([]);
+  const [toast, setToast] = useState('');
+  const [imageKey, setImageKey] = useState(0);
 
   useEffect(() => {
     fetchData();
@@ -421,6 +429,17 @@ export default function Vehicles() {
                     onChange={v => setForm(f => ({ ...f, locationId: Number(v) }))}
                     placeholder="Chọn chi nhánh"
                 />
+
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">Dung tích xy lanh (cc)</label>
+                  <input
+                    type="number"
+                    value={form.engineCapacity || ''}
+                    onChange={e => setForm(f => ({ ...f, engineCapacity: Number(e.target.value) }))}
+                    placeholder="VD: 150"
+                    className="w-full px-4 py-2 bg-[#F3F4F6] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 border-transparent focus:border-blue-500 transition-all font-medium"
+                  />
+                </div>
               </div>
 
               <div className="space-y-4">

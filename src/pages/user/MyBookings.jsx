@@ -28,13 +28,13 @@ export default function MyBookings() {
         api.get('/vehicles?size=100') // Fetch a larger set to ensure matches
       ]);
       
-      const pageData = bookingsResponse.data;
-      setBookings(pageData.content);
+      const pageData = bookingsResponse.data || bookingsResponse;
+      setBookings(pageData.content || []);
       setTotalPages(pageData.totalPages);
       setTotalElements(pageData.totalElements);
 
       // Handle both cases: paginated or list response for vehicles
-      const vData = vehiclesResponse.data?.content || vehiclesResponse;
+      const vData = vehiclesResponse.content || vehiclesResponse.data?.content || vehiclesResponse;
       setVehicles(vData);
     } catch (error) {
       console.error('Error fetching bookings:', error);

@@ -1,16 +1,52 @@
-# React + Vite
+# XeNow UI - Frontend Web Application
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+![XeNow Demo](public/images/hero-bg.webp)
 
-Currently, two official plugins are available:
+## 📌 Giới Thiệu
+XeNow là nền tảng quản lý và cho thuê xe hơi/xe máy trực tuyến tân tiến dành cho mô hình kinh doanh B2C/C2C. Giao diện được thiết kế hiện đại, mượt mà dựa trên React.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🚀 Các Luồng Hoạt Động Chính (Feature Workflows)
 
-## React Compiler
+Chúng tôi đã thiết kế UI chặt chẽ, chú trọng trải nghiệm Navigation liền mạch:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 1. Luồng Lọc và Xem Danh Sách Xe
+Trang `/vehicles` cung cấp Navbar đa dạng (Loại xe, Hãng, Giá, Vị trí) kết nối trực tiếp với Database, tải mượt bằng kỹ thuật Pagination Page.
 
-## Expanding the ESLint configuration
+> *(Bạn hãy chụp ảnh trang Danh Sách Xe và lưu bằng tên dưới đây để chèn vào Github nha)*
+`![Filter & Discover Flow](public/docs/filter_flow.png)`
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 2. Luồng Booking (Đặt Xe & Xác Thực Thông Tin)
+Chức năng eKYC tự động tích hợp form tải ảnh. 
+Giao diện Modal thay cho Alert khó chịu, Validation được hiển thị trực tiếp báo lỗi realtime.
+
+> *(Chụp ảnh Modal Loading và OCR form dán ảnh dưới đây)*
+`![Booking Flow](public/docs/booking_flow.png)`
+
+### 3. Luồng Thanh Toán Đa Phương Thức
+Sử dụng Popup thông báo VietQR động (Với Regex xóa dấu, đồng bộ hóa chuỗi BankInfo) và giao diện chờ của VNPAY. Điều hướng (`useNavigate`) mượt mà vào My Bookings sau khi xong thao tác.
+
+> *(Chụp ảnh Flow quét QR Code dán dứoi đây)*
+`![Payment Flow](public/docs/payment_flow.png)`
+
+### 4. Luồng Trả Xe & Quản Trị Hệ Thống (Admin)
+Admin Dashboard `/admin` quản lý đa tác vụ với React Router Outlets theo cơ chế Nesting gọn gàng. Hỗ trợ thay đổi status đơn đặt thành Hoàn thành và thu nợ phí phát sinh.
+
+> *(Chụp ảnh giao diện Admin Dashboard - phần Return Vehicle dán dưới đây)*
+`![Admin Return Flow](public/docs/admin_return_flow.png)`
+
+## 🛠 Tech Stack Sử Dụng
+* **Framework:** React 18, Vite
+* **Styling:** TailwindCSS
+* **Icons & Components:** Lucide React
+
+## 📝 Cài Đặt và Chạy
+
+**Yêu cầu:** Node.js version 18+
+
+```bash
+# Cài đặt các thư viện gói Node Module
+npm install
+
+# Khởi chạy Front-End Dev Server (Mặc định Port 5173)
+npm run dev
+```

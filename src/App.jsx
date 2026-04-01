@@ -14,6 +14,7 @@ import Login from './pages/user/Login';
 import Register from './pages/user/Register';
 import VerifyIdentity from './pages/user/VerifyIdentity';
 import Payment from './pages/user/Payment';
+import VnpayReturn from './pages/user/VnpayReturn';
 
 // Admin pages
 import Dashboard from './pages/admin/Dashboard';
@@ -47,6 +48,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify" element={<VerifyIdentity />} />
+          <Route path="/vnpay-return" element={<VnpayReturn />} />
 
           {/* Admin routes */}
           <Route path="/admin" element={<AdminLayout />}>
