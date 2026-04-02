@@ -110,7 +110,10 @@ function StepCCCD({ onNext }) {
         const ocrResponse = await fetch('http://localhost:8080/api/customer/ocr/cccd', {
           method: 'POST',
           body: formData,
-          credentials: 'include'
+          credentials: 'include',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
         });
         
         if (ocrResponse.ok) {
@@ -248,20 +251,25 @@ function StepGPLX({ onNext, onBack }) {
         const ocrResponse = await fetch('http://localhost:8080/api/customer/ocr/driver-license', {
           method: 'POST',
           body: formData,
-          credentials: 'include'
+          credentials: 'include',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
         });
         
         if (ocrResponse.ok) {
           const data = await ocrResponse.json();
           console.log('OCR GPLX data:', data);
           
-          // Check if license is unlimited
-          const unlimited = data.isUnlimited === 'true';
+          // Check if license is unlimited based on class or OCR data
+          const licenseClass = data.licenseClass || '';
+          const isAClass = ['A1', 'A2', 'A3'].includes(licenseClass);
+          const unlimited = data.isUnlimited === 'true' || isAClass;
           setIsUnlimited(unlimited);
           
           setForm({
             soGPLX: data.driverLicense || '',
-            hangGPLX: data.licenseClass || '',
+            hangGPLX: licenseClass,
             ngayCap: data.issueDate ? convertDateFormat(data.issueDate) : '',
             ngayHetHan: unlimited ? 'Không thời hạn' : (data.expiryDate ? convertDateFormat(data.expiryDate) : '')
           });
@@ -327,9 +335,14 @@ function StepGPLX({ onNext, onBack }) {
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-medium text-[#0F172A]">Hạng GPLX</label>
                 <select className="w-full px-4 py-2 rounded-full bg-white border-2 border-black/10 outline-none focus:border-[#F38230] text-sm text-[#64748B]"
-                  value={form.hangGPLX} onChange={e => setForm({ ...form, hangGPLX: e.target.value })}>
+                  value={form.hangGPLX} onChange={e => {
+                    const hs = e.target.value;
+                    const isAClass = ['A1', 'A2', 'A3'].includes(hs);
+                    setIsUnlimited(isAClass);
+                    setForm({ ...form, hangGPLX: hs, ngayHetHan: isAClass ? 'Không thời hạn' : (form.ngayHetHan === 'Không thời hạn' ? '' : form.ngayHetHan) });
+                  }}>
                   <option value="">-- Chọn hạng --</option>
-                  {['A1','A2','B1','B2','C','D','E','F'].map(h => <option key={h}>{h}</option>)}
+                  {['A1','A2','A3','B1','B2','C','D','E','F'].map(h => <option key={h}>{h}</option>)}
                 </select>
               </div>
               <div className="flex flex-col gap-2">
@@ -540,27 +553,27 @@ export default function VerifyIdentity() {
       const response = await fetch('http://localhost:8080/api/customer/verify', {
         method: 'POST',
         credentials: 'include',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         body: formData
       });
 
       if (response.ok) {
         setTimeout(() => setStep('success'), 2000);
       } else {
-        // Check if it's a validation error with step info
         try {
           const errorData = await response.json();
+          setToast({ message: errorData.message || 'Xác thực thất bại', type: 'error' });
           if (errorData.step) {
-            setToast({ message: errorData.message, type: 'error' });
             setStep(errorData.step);
-            return;
+          } else {
+            setStep(3);
           }
         } catch (e) {
-          // Not JSON, treat as text
+          setToast({ message: 'Lỗi không xác định từ server', type: 'error' });
+          setStep(3);
         }
-        
-        const error = await response.text();
-        setToast({ message: 'Xác thực thất bại: ' + error, type: 'error' });
-        setStep(3);
       }
     } catch (error) {
       console.error('Verification error:', error);

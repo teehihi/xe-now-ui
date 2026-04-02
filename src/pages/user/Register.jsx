@@ -36,22 +36,25 @@ export default function Register() {
 
     try {
       const result = await api.post('/auth/register', {
-        username: form.email.split('@')[0],
+        username: form.email.split('@')[0].length >= 3 
+          ? form.email.split('@')[0] 
+          : form.email.split('@')[0] + '_user',
         password: form.password,
         fullName: form.fullName,
         email: form.email,
         phone: form.phone
       });
 
-      if (result.success || result.id) {
+      // api.js unwraps ApiResponse, so result = data object with {authenticated, token, user}
+      if (result && (result.authenticated || result.token)) {
         showToast('Đăng ký thành công! Vui lòng đăng nhập.', 'success');
         setTimeout(() => navigate('/login'), 1500);
       } else {
-        showToast('Đăng ký thất bại: ' + (result.message || 'Lỗi không xác định'), 'error');
+        showToast('Đăng ký thất bại: ' + (result?.message || 'Lỗi không xác định'), 'error');
       }
     } catch (error) {
       console.error('Registration error:', error);
-      showToast(error.response?.data?.message || 'Lỗi kết nối đến server', 'error');
+      showToast(error.message || 'Lỗi kết nối đến server', 'error');
     }
   };
 
