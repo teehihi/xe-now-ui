@@ -3,6 +3,29 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Car, MapPin, Calendar, Shield, Star, Check, ArrowLeft, Fuel, Gauge, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import { api } from '../../services/api';
 import Toast from '../../components/Toast';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
+  shadowUrl: markerShadow,
+});
+
+const LOCATION_COORDS = {
+  1: [10.7745, 106.7032], // 68 Nguyễn Huệ, Quận 1, TP. HCM
+  2: [21.0285, 105.8523], // 45 Hoàn Kiếm, Hà Nội
+  3: [16.0544, 108.2022], // Đà Nẵng
+  'Chi nhánh TP. Hồ Chí Minh': [10.7745, 106.7032],
+  'Chi nhánh Hà Nội': [21.0285, 105.8523],
+  'Chi nhánh Đà Nẵng': [16.0544, 108.2022],
+};
 
 export default function VehicleDetail() {
   const { id } = useParams();
@@ -235,7 +258,29 @@ export default function VehicleDetail() {
                 <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                   <MapPin size={18} /> Địa điểm nhận xe
                 </h3>
-                <p className="text-gray-600">{vehicle.location}</p>
+                <p className="text-gray-600 mb-4">{vehicle.location}</p>
+                
+                {/* Embedded Map */}
+                <div className="h-64 w-full rounded-xl overflow-hidden shadow-sm border border-gray-200 mt-4 relative z-0">
+                  {(() => {
+                    const coords = LOCATION_COORDS[vehicle.locationId] || LOCATION_COORDS[vehicle.location] || [10.762622, 106.660172];
+                    return (
+                      <MapContainer center={coords} zoom={15} scrollWheelZoom={true} className="w-full h-full">
+                        <TileLayer
+                          attribution='&copy; <a href="https://carto.com/">Carto</a>'
+                          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                        />
+                        <Marker position={coords}>
+                          <Popup>
+                            <div className="text-center font-semibold text-gray-800">
+                              {vehicle.location}
+                            </div>
+                          </Popup>
+                        </Marker>
+                      </MapContainer>
+                    );
+                  })()}
+                </div>
               </div>
             </div>
           </div>

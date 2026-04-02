@@ -181,11 +181,13 @@ export default function MyBookings() {
                       <div className="flex gap-3">
                         {booking.status.toLowerCase() === 'pending' && (
                           <div className="flex gap-2">
-                            <button 
-                              onClick={() => navigate(`/payment/${booking.bookingId}`)}
-                              className="px-5 py-2.5 text-sm font-bold text-white bg-orange-500 rounded-xl hover:bg-orange-600 transition-all shadow-lg shadow-orange-200">
-                              Thanh toán cọc
-                            </button>
+                            {vehicle?.depositAmount > 0 && (
+                              <button 
+                                onClick={() => navigate(`/payment/${booking.bookingId}`)}
+                                className="px-5 py-2.5 text-sm font-bold text-white bg-orange-500 rounded-xl hover:bg-orange-600 transition-all shadow-lg shadow-orange-200">
+                                Thanh toán cọc
+                              </button>
+                            )}
                             <button className="px-5 py-2.5 text-sm font-bold text-red-500 bg-red-50 rounded-xl hover:bg-red-100 transition-colors">
                               Hủy đơn
                             </button>

@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Search, ChevronDown, Eye, Check, X, Car, Calendar, DollarSign, Phone, Mail, FileText, ClipboardList } from 'lucide-react';
+import { Search, ChevronDown, Eye, Check, X, Car, Calendar, DollarSign, Phone, Mail, FileText, ClipboardList, Printer } from 'lucide-react';
 import { api } from '../../services/api';
 import StatusBadge from '../../components/StatusBadge';
 import Pagination from '../../components/Pagination';
+import { generateContractPdf } from '../../utils/contractPdf';
 
 const statusOptions = ['Tất cả trạng thái', 'Pending', 'Confirmed', 'Ongoing', 'Completed', 'Cancelled'];
 const statusLabel = {
@@ -426,7 +427,49 @@ export default function Bookings() {
               </div>
             </div>
 
-            <div className="px-10 py-6 bg-gray-50 flex justify-end">
+            <div className="px-10 py-6 bg-gray-50 flex justify-between items-center">
+              <button
+                onClick={async () => {
+                  const token = localStorage.getItem('token');
+                  const headers = { 'Authorization': `Bearer ${token}` };
+                  let customerData = { fullName: selectedBooking.customerName };
+                  let vehicleData = { name: selectedBooking.vehicleModel };
+
+                  try {
+                    // Fetch vehicle details
+                    if (selectedBooking.vehicleId) {
+                      const vRes = await fetch(`http://localhost:8080/api/admin/vehicles/${selectedBooking.vehicleId}`, { headers });
+                      if (vRes.ok) {
+                        const vJson = await vRes.json();
+                        vehicleData = vJson.data || vJson;
+                      }
+                    }
+
+                    // Fetch customer by email to get userId, then get customer details
+                    const usersRes = await fetch(`http://localhost:8080/api/admin/users?keyword=${encodeURIComponent(selectedBooking.customerEmail)}&size=5`, { headers });
+                    if (usersRes.ok) {
+                      const usersJson = await usersRes.json();
+                      const users = usersJson.data?.content || [];
+                      const found = users.find(u => u.email === selectedBooking.customerEmail);
+                      if (found) {
+                        customerData = { ...customerData, ...found };
+                        // Fetch customer CCCD info
+                        const custRes = await fetch(`http://localhost:8080/api/customer/${found.userId || found.id}`, { headers });
+                        if (custRes.ok) {
+                          const custJson = await custRes.json();
+                          const cust = custJson.data || custJson;
+                          customerData = { ...customerData, ...cust };
+                        }
+                      }
+                    }
+                  } catch(e) { console.error('Contract fetch error:', e); }
+
+                  generateContractPdf(selectedBooking, vehicleData, customerData);
+                }}
+                className="flex items-center gap-2 px-6 py-3 bg-[#1B83A1] text-white rounded-2xl text-sm font-bold hover:bg-[#1B83A1]/90 transition-all"
+              >
+                <Printer size={16} /> In hợp đồng
+              </button>
               <button
                 onClick={() => setShowDetailModal(false)}
                 className="px-8 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-bold text-gray-600 hover:bg-gray-100 transition-all"
