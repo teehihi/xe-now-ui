@@ -258,7 +258,7 @@ export default function Vehicles() {
   const getImgUrl = (url) => {
     if (!url) return '/images/car-toyota-camry.webp';
     if (url.startsWith('http') || url.startsWith('blob:')) return url;
-    return `http://localhost:8080${url}`;
+    return `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}${url}`;
   }
 
   return (
