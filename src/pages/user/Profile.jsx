@@ -47,13 +47,13 @@ export default function Profile() {
       const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
       
       let currentUser = user;
-      const userResponse = await fetch('http://localhost:8080/api/auth/me', { headers });
+      const userResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/auth/me`, { headers });
       if (userResponse.ok) {
         const userData = await userResponse.json();
         currentUser = userData.data?.user || userData.user || userData.data || userData;
       }
       
-      const verifyResponse = await fetch('http://localhost:8080/api/customer/verify-status', { headers });
+      const verifyResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/customer/verify-status`, { headers });
       if (!verifyResponse.ok) {
         setFormData({
           fullName: currentUser?.fullName || '', email: currentUser?.email || '',
@@ -71,7 +71,7 @@ export default function Profile() {
         // Fetch licenses
         fetchLicenses(headers);
         
-        const customerResponse = await fetch(`http://localhost:8080/api/customer/${verifyData.userId}`, { headers });
+        const customerResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/customer/${verifyData.userId}`, { headers });
         if (customerResponse.ok) {
           const customerJson = await customerResponse.json();
           const customer = customerJson.data || customerJson;
@@ -99,7 +99,7 @@ export default function Profile() {
 
   const fetchLicenses = async (headers) => {
     try {
-      const res = await fetch('http://localhost:8080/api/customer/licenses', { headers });
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/customer/licenses`, { headers });
       if (res.ok) {
         const json = await res.json();
         setLicenses(json.data || []);
@@ -112,7 +112,7 @@ export default function Profile() {
   const handleSave = async () => {
     try {
       const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
-      const res = await fetch('http://localhost:8080/api/users/me', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/users/me`, {
         method: 'PUT',
         headers,
         body: JSON.stringify({
@@ -143,7 +143,7 @@ export default function Profile() {
     const formData = new FormData();
     formData.append('image', file);
     try {
-      const res = await fetch('http://localhost:8080/api/customer/ocr/driver-license', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/customer/ocr/driver-license`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -199,7 +199,7 @@ export default function Profile() {
       }
       formData.append('image', licenseFile);
 
-      const res = await fetch('http://localhost:8080/api/customer/licenses', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/customer/licenses`, {
         method: 'POST',
         headers,
         body: formData

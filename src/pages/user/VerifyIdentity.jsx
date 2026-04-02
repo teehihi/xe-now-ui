@@ -107,7 +107,7 @@ function StepCCCD({ onNext }) {
         const formData = new FormData();
         formData.append('image', file);
         
-        const ocrResponse = await fetch('http://localhost:8080/api/customer/ocr/cccd', {
+        const ocrResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/customer/ocr/cccd`, {
           method: 'POST',
           body: formData,
           credentials: 'include',
@@ -248,7 +248,7 @@ function StepGPLX({ onNext, onBack }) {
         const formData = new FormData();
         formData.append('image', file);
         
-        const ocrResponse = await fetch('http://localhost:8080/api/customer/ocr/driver-license', {
+        const ocrResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/customer/ocr/driver-license`, {
           method: 'POST',
           body: formData,
           credentials: 'include',
@@ -550,7 +550,7 @@ export default function VerifyIdentity() {
         formData.append('driverLicenseExpiry', gplx.ngayHetHan);
       }
       
-      const response = await fetch('http://localhost:8080/api/customer/verify', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/customer/verify`, {
         method: 'POST',
         credentials: 'include',
         headers: {

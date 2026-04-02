@@ -57,7 +57,7 @@ const Vehicles = () => {
         const transformedData = content.map(vehicle => ({
           ...vehicle,
           pricePerDay: Number(vehicle.pricePerDay || vehicle.dailyRate || 0),
-          image: vehicle.image?.startsWith('http') ? vehicle.image : `http://localhost:8080${vehicle.image || '/images/car-toyota-camry.webp'}`
+          image: vehicle.image?.startsWith('http') ? vehicle.image : `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}${vehicle.image || '/images/car-toyota-camry.webp'}`
         }));
         setVehicles(transformedData);
         setTotalPages(res.totalPages || 1);
@@ -149,7 +149,7 @@ const Vehicles = () => {
   const getImageUrl = (url) => {
     if (!url) return '/images/car-toyota-camry.webp';
     if (url.startsWith('http')) return url;
-    return `http://localhost:8080${url}`;
+    return `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}${url}`;
   };
 
   return (

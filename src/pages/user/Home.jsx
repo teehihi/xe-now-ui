@@ -36,7 +36,7 @@ export default function Home() {
   const vehicleTypes = ['Xe Ô Tô', 'Xe Tay Ga', 'Xe Số'];
 
   useEffect(() => {
-    fetch('http://localhost:8080/api/locations')
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/locations`)
       .then(r => r.json())
       .then(data => {
         const list = data.data || data;
@@ -87,7 +87,7 @@ export default function Home() {
           ...vehicle,
           pricePerDay: Number(vehicle.pricePerDay || vehicle.dailyRate || 0),
           status: vehicle.status ? vehicle.status.toLowerCase() : 'available',
-          image: vehicle.image?.startsWith('http') ? vehicle.image : `http://localhost:8080${vehicle.image || '/images/car-toyota-camry.webp'}`
+          image: vehicle.image?.startsWith('http') ? vehicle.image : `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}${vehicle.image || '/images/car-toyota-camry.webp'}`
         }));
         setVehicles(transformedData);
       } catch (error) {

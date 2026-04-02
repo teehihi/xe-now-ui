@@ -92,7 +92,7 @@ export default function BookingForm() {
   const getImageUrl = (url) => {
     if (!url) return '/images/car-toyota-camry.webp';
     if (url.startsWith('http')) return url;
-    return `http://localhost:8080${url}`;
+    return `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}${url}`;
   };
 
   const [formData, setFormData] = useState({
@@ -184,14 +184,14 @@ export default function BookingForm() {
   // Fetch customer verification data to fill address and idNumber (and update profile if needed)
   useEffect(() => {
     if (!token || !user?.userId) return;
-    fetch(`http://localhost:8080/api/customer/verify-status`, {
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/customer/verify-status`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
       .then(r => r.json())
       .then(res => {
         const data = res.data || res;
         if (data.verified && data.userId) {
-          return fetch(`http://localhost:8080/api/customer/${data.userId}`, {
+          return fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/customer/${data.userId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           }).then(r => r.json());
         }
@@ -208,7 +208,7 @@ export default function BookingForm() {
         }));
         
         // Fetch licenses for this authenticated user
-        fetch(`http://localhost:8080/api/customer/licenses`, {
+        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/customer/licenses`, {
           headers: { 'Authorization': `Bearer ${token}` }
         })
         .then(r => r.json())
