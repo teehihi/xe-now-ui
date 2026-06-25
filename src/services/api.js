@@ -30,9 +30,12 @@ const handleResponse = async (response) => {
 
   if (!response.ok) {
     if (response.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login?error=session_expired';
-      throw new Error('Phiên đăng nhập hết hạn, vui lòng đăng nhập lại.');
+      const isAuthRequest = response.url.includes('/auth/login') || response.url.includes('/auth/refresh');
+      if (!isAuthRequest) {
+        localStorage.removeItem('token');
+        window.location.href = '/login?error=session_expired';
+        throw new Error('Phiên đăng nhập hết hạn, vui lòng đăng nhập lại.');
+      }
     }
     if (response.status === 403) {
       // Dispatch global event for 403 forbidden — ForbiddenToast handles the notification
